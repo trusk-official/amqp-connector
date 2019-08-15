@@ -4,6 +4,7 @@ defaults: &defaults
   working_directory: ~/repo
   docker:
     - image: node:10.16.2
+    - image: rabbitmq:latest
 
 jobs:
   test:
@@ -18,6 +19,7 @@ jobs:
           - v1-dependencies-
 
       - run: npm install
+      - run: npm run lint
       - run: npm test
 
       - save_cache:
@@ -55,10 +57,7 @@ workflows:
   version: 2
   test-deploy:
     jobs:
-      - test:
-          filters:
-            tags:
-              only: /^[0-9]+\.[0-9]+\.[0-9]+/
+      - test
       - build:
           requires:
             - test
