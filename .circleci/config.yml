@@ -57,16 +57,23 @@ workflows:
   version: 2
   test-deploy:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              only: /^[0-9]+\.[0-9]+\.[0-9]+/
       - build:
           requires:
             - test
           filters:
             tags:
               only: /^[0-9]+\.[0-9]+\.[0-9]+/
+            branches:
+              ignore: /.*/
       - deploy:
           requires:
             - build
           filters:
             tags:
               only: /^[0-9]+\.[0-9]+\.[0-9]+/
+            branches:
+              ignore: /.*/
