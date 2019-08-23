@@ -1,10 +1,7 @@
 # AMQP connector
 
 
-<!-- [![npm version](https://badge.fury.io/js/@trusk/amqp-connector.svg)](https://badge.fury.io/js/@trusk/amqp-connector) -->
-
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/master/LICENSE) [![CircleCI](https://circleci.com/gh/trusk-official/amqp-connector.svg?style=svg)](https://circleci.com/gh/trusk-official/amqp-connector)
- [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://reactjs.org/docs/how-to-contribute.html#your-first-pull-request)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/master/LICENSE) [![CircleCI](https://circleci.com/gh/trusk-official/amqp-connector.svg?style=svg)](https://circleci.com/gh/trusk-official/amqp-connector) [![npm version](https://badge.fury.io/js/%40trusk%2Famqp-connector.svg)](https://badge.fury.io/js/%40trusk%2Famqp-connector) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://reactjs.org/docs/how-to-contribute.html#your-first-pull-request)
 
 An middle level [amqp.node](https://github.com/squaremo/amqp.node) wrapper for every day use. It requires **node.js >= 6**.
 
