@@ -61,7 +61,8 @@ const channel = connection.buildChannelIfNotExists({
   swap_path: path.resolve("./swap/my_channel"),
   swap_size: 50000,
   prefetchCount: 5,
-  prefetchGlobal: 10
+  prefetchGlobal: 10,
+  rejectTimeout: 0 // The timeout before a message is rejected (defaults to 0)
 });
 ```
 

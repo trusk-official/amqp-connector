@@ -412,11 +412,12 @@ const amqpconnector = conf => {
   };
 
   const buildChannel = conn => p => {
-    const params = { name: "default", rejectTimeout: 5000, ...p };
+    const params = { name: "default", rejectTimeout: 0, ...p };
     if (params.name in ctx.channels) {
       throw new Error("channel_already_exists");
     }
     const chan = conn.createChannel(params);
+    chan.rejectTimeout = params.rejectTimeout;
     chan.json = !!p.json;
     chan.addSetup(channel => {
       return Number.isInteger(params.prefetchCount)
