@@ -97,7 +97,12 @@ const amqpconnector = conf => {
   const subscribeToMessages = chan => async (
     qualifier,
     cb,
-    params = { exchange: {}, queue: {}, headers: {} }
+    params = {
+      exchange: {},
+      queue: {},
+      headers: {},
+      nack: { allUpTo: false, requeue: false }
+    }
   ) => {
     const q = subscribeQualifierParser(qualifier);
     // eslint-disable-next-line no-underscore-dangle
@@ -197,10 +202,14 @@ const amqpconnector = conf => {
                 chan.ack(message);
               }
             } catch (e) {
-              setTimeout(
-                () => channel.nack(message, false, false),
-                chan.rejectTimeout
-              );
+              setTimeout(() => {
+                config.transport.log("message_nack", qualifier, message, e);
+                channel.nack(
+                  message,
+                  !!R.path(["nack", "allUpTo"], params),
+                  !!R.path(["nack", "requeue"], params)
+                );
+              }, chan.rejectTimeout);
             }
           });
         });
