@@ -101,9 +101,18 @@ const amqpconnector = conf => {
       exchange: {},
       queue: {},
       headers: {},
-      nack: { allUpTo: false, requeue: false }
+      nack: { allUpTo: false, requeue: false },
+      retry: undefined,
+      dumpQueue: undefined
     }
   ) => {
+    const dlPrefix = params.dlPrefix || "dl_";
+    const retry = Number.isInteger(params.retry)
+      ? Math.max(params.retry, 1)
+      : null;
+    const maxTries = Number.isInteger(params.maxTries)
+      ? Math.max(params.maxTries, 1)
+      : null;
     const q = subscribeQualifierParser(qualifier);
     // eslint-disable-next-line no-underscore-dangle
     const _cb = async (...args) => {
@@ -132,87 +141,158 @@ const amqpconnector = conf => {
           throw e;
         });
     };
+
     return chan.addSetup(channel => {
-      return Promise.all([
-        q.exchange
-          ? channel.assertExchange(q.exchange, q.type, {
+      return (retry
+        ? Promise.all([
+            channel.assertExchange(`${dlPrefix}${retry}`, "fanout", {
               durable: true,
+              autoDelete: false
+            }),
+            channel.assertQueue(`${dlPrefix}${retry}`, {
+              exclusive: false,
               autoDelete: false,
-              ...params.exchange
-            })
-          : Promise.resolve(),
-        channel.assertQueue(q.queue, {
-          exclusive: false,
-          autoDelete: false,
-          ...params.queue
-        })
-      ])
-        .then(() =>
-          q.exchange
-            ? channel.bindQueue(
-                q.queue,
-                q.exchange,
-                q.routingKey,
-                params.headers
-              )
-            : Promise.resolve()
-        )
-        .then(() => {
-          return channel.consume(q.queue, async message => {
-            try {
-              if (message) {
-                let mess = {
-                  ...message,
-                  content: chan.handleMessageContentOnReception(message.content)
-                };
-                if (params.schema) {
-                  const { error, value } = Joi.validate(mess, params.schema);
-                  if (error) {
-                    config.transport.log(
-                      "subscribe_message_fails_validation",
-                      qualifier,
-                      mess,
-                      error
-                    );
-                    chan.ack(message);
-                    return;
-                  }
-                  mess = value;
-                }
-                // eslint-disable-next-line no-underscore-dangle
-                await _cb({
-                  message: mess,
-                  invoke: callWithContextHeaders(chan.invoke)({
-                    ...message.properties.headers,
-                    "x-consumer": qualifier,
-                    "x-service":
-                      config.connection.clientProperties["service-name"],
-                    "x-service-version":
-                      config.connection.clientProperties["service-version"]
-                  }),
-                  publishMessage: callWithContextHeaders(chan.publishMessage)({
-                    ...message.properties.headers,
-                    "x-consumer": qualifier,
-                    "x-service":
-                      config.connection.clientProperties["service-name"],
-                    "x-service-version":
-                      config.connection.clientProperties["service-version"]
+              messageTtl: retry,
+              deadLetterExchange: ""
+            }),
+            ...(params.dumpQueue
+              ? [
+                  channel.assertQueue(params.dumpQueue, {
+                    exclusive: false,
+                    autoDelete: false
                   })
-                });
-                chan.ack(message);
+                ]
+              : [])
+          ]).then(() => {
+            return channel.bindQueue(
+              `${dlPrefix}${retry}`,
+              `${dlPrefix}${retry}`,
+              ""
+            );
+          })
+        : Promise.resolve()
+      ).then(() => {
+        return Promise.all([
+          q.exchange
+            ? channel.assertExchange(q.exchange, q.type, {
+                durable: true,
+                autoDelete: false,
+                ...params.exchange
+              })
+            : Promise.resolve(),
+          channel.assertQueue(q.queue, {
+            exclusive: false,
+            autoDelete: false,
+            ...params.queue,
+            ...(retry
+              ? {
+                  deadLetterExchange: `${dlPrefix}${retry}`,
+                  deadLetterRoutingKey: q.queue
+                }
+              : {})
+          })
+        ])
+          .then(() =>
+            q.exchange
+              ? channel.bindQueue(
+                  q.queue,
+                  q.exchange,
+                  q.routingKey,
+                  params.headers
+                )
+              : Promise.resolve()
+          )
+          .then(() => {
+            return channel.consume(q.queue, async message => {
+              try {
+                if (message) {
+                  let mess = {
+                    ...message,
+                    content: chan.handleMessageContentOnReception(
+                      message.content
+                    )
+                  };
+                  if (params.schema) {
+                    const { error, value } = Joi.validate(mess, params.schema);
+                    if (error) {
+                      config.transport.log(
+                        "subscribe_message_fails_validation",
+                        qualifier,
+                        mess,
+                        error
+                      );
+                      chan.ack(message);
+                      return;
+                    }
+                    mess = value;
+                  }
+                  // eslint-disable-next-line no-underscore-dangle
+                  await _cb({
+                    message: mess,
+                    invoke: callWithContextHeaders(chan.invoke)({
+                      ...message.properties.headers,
+                      "x-consumer": qualifier,
+                      "x-service":
+                        config.connection.clientProperties["service-name"],
+                      "x-service-version":
+                        config.connection.clientProperties["service-version"]
+                    }),
+                    publishMessage: callWithContextHeaders(chan.publishMessage)(
+                      {
+                        ...message.properties.headers,
+                        "x-consumer": qualifier,
+                        "x-service":
+                          config.connection.clientProperties["service-name"],
+                        "x-service-version":
+                          config.connection.clientProperties["service-version"]
+                      }
+                    )
+                  });
+                  chan.ack(message);
+                }
+              } catch (e) {
+                const deathCounts = (
+                  (message.properties.headers["x-death"] || []).find(
+                    death => death.queue === q.queue
+                  ) || {}
+                ).count;
+                if (deathCounts && maxTries && deathCounts >= maxTries - 1) {
+                  config.transport.log(
+                    "message_nack_stop_retrying",
+                    qualifier,
+                    message,
+                    e
+                  );
+                  chan.ack(message);
+                  if (params.dumpQueue) {
+                    chan.sendToQueue(
+                      params.dumpQueue,
+                      chan.payloadToBufferForPublish(message.content),
+                      {
+                        headers: message.properties.headers
+                      }
+                    );
+                    config.transport.log(
+                      "message_ack_sent_to_dump_queue",
+                      qualifier,
+                      message,
+                      e
+                    );
+                  }
+                } else {
+                  setTimeout(() => {
+                    config.transport.log("message_nack", qualifier, message, e);
+                    return chan.nack(
+                      message,
+                      !!R.path(["nack", "allUpTo"], params),
+                      !!R.path(["nack", "requeue"], params)
+                    );
+                  }, chan.rejectTimeout);
+                }
               }
-            } catch (e) {
-              setTimeout(() => {
-                config.transport.log("message_nack", qualifier, message, e);
-                channel.nack(
-                  message,
-                  !!R.path(["nack", "allUpTo"], params),
-                  !!R.path(["nack", "requeue"], params)
-                );
-              }, chan.rejectTimeout);
-            }
+            });
           });
-        });
+      });
     });
   };
 
