@@ -38,8 +38,12 @@ afterAll(async () => {
     return Promise.all([
       channel.deleteExchange("my-direct-validated-exchange-1"),
       channel.deleteExchange("my-direct-validated-exchange-2"),
+        channel.deleteExchange("my-direct-validated-exchange-3"),
+        channel.deleteExchange("my-direct-validated-exchange-4"),
       channel.deleteQueue("my-validated-queue-1"),
-      channel.deleteQueue("my-validated-queue-2")
+      channel.deleteQueue("my-validated-queue-2"),
+      channel.deleteQueue("my-validated-queue-3"),
+      channel.deleteQueue("my-validated-queue-4")
     ]);
   });
 

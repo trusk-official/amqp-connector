@@ -59,14 +59,19 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await publishChannel1.addSetup(channel => {
-    return Promise.all([
-      channel.deleteExchange("my-direct-traced-exchange-1"),
-      channel.deleteExchange("my-direct-traced-exchange-2"),
-      channel.deleteQueue("my-traced-queue-1"),
-      channel.deleteQueue("my-traced-queue-2")
-    ]);
-  });
+  await Promise.all([
+    publishChannel1.addSetup(channel => {
+      return Promise.all([
+        channel.deleteExchange("my-direct-traced-exchange-1"),
+        channel.deleteExchange("my-direct-traced-exchange-2"),
+        channel.deleteQueue("my-traced-queue-1"),
+        channel.deleteQueue("my-traced-queue-2")
+      ]);
+    }),
+    subscribeChannel2.addSetup(channel => {
+      return Promise.all([channel.deleteQueue("my-traced-rpc-function-5")]);
+    })
+  ]);
 
   return Promise.all([
     publishChannel1.close(),
@@ -83,7 +88,7 @@ test("publish subscribe RPC function traced", async () => {
 
   const result = await new Promise((resolve, reject) => {
     subscribeChannel2.listen(
-      "my-traced-rpc-function-4",
+      "my-traced-rpc-function-5",
       async ({ message, publishMessage }) => {
         headerStack.push(message.properties.headers);
         await publishMessage(
@@ -108,7 +113,7 @@ test("publish subscribe RPC function traced", async () => {
         "direct/my-direct-traced-exchange-1/my.routing.key/my-traced-queue-1",
         async ({ message, invoke }) => {
           headerStack.push(message.properties.headers);
-          await invoke("my-traced-rpc-function-4", {
+          await invoke("my-traced-rpc-function-5", {
             value: 2 * message.content.value
           });
         }
@@ -136,7 +141,7 @@ test("publish subscribe RPC function traced", async () => {
   expect(headerStack[0]["x-timestamp"]).toBeLessThan(+new Date() + 1000);
   expect(headerStack[1]["x-service"]).toBe("my_service_1");
   expect(headerStack[1]["x-service-version"]).toBe("1.2.3");
-  expect(headerStack[1]["x-consumer"]).toBe("my-traced-rpc-function-4");
+  expect(headerStack[1]["x-consumer"]).toBe("my-traced-rpc-function-5");
   expect(headerStack[1]["x-timestamp"]).toBeGreaterThanOrEqual(
     +new Date() - 1000
   );
@@ -149,7 +154,7 @@ test("publish subscribe RPC function traced", async () => {
   expect(headerStack[2]["x-service"]).toBe("my_service_2");
   expect(headerStack[2]["x-service-version"]).toBe("4.5.6");
   expect(headerStack[2]["x-origin-service"]).toBe("my_service_1");
-  expect(headerStack[2]["x-origin-consumer"]).toBe("my-traced-rpc-function-4");
+  expect(headerStack[2]["x-origin-consumer"]).toBe("my-traced-rpc-function-5");
   expect(headerStack[2]["x-timestamp"]).toBeGreaterThanOrEqual(
     +new Date() - 1000
   );
