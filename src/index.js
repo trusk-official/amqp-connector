@@ -114,6 +114,8 @@ const amqpconnector = conf => {
       ? Math.max(params.maxTries, 1)
       : null;
     const q = subscribeQualifierParser(qualifier);
+    const schema = params.schema && Joi.compile(params.schema);
+
     // eslint-disable-next-line no-underscore-dangle
     const _cb = async (...args) => {
       config.transport.log(
@@ -212,8 +214,8 @@ const amqpconnector = conf => {
                       message.content
                     )
                   };
-                  if (params.schema) {
-                    const { error, value } = Joi.validate(mess, params.schema);
+                  if (schema) {
+                    const { error, value } = Joi.validate(mess, schema);
                     if (error) {
                       config.transport.log(
                         "subscribe_message_fails_validation",
@@ -414,6 +416,8 @@ const amqpconnector = conf => {
   };
 
   const listen = chan => async (fnName, callback, params = { queue: {} }) => {
+    const schema = params.schema && Joi.compile(params.schema);
+
     return chan.addSetup(channel => {
       // eslint-disable-next-line no-underscore-dangle
       const _consume = (fn, cb, cparams) => {
@@ -438,8 +442,8 @@ const amqpconnector = conf => {
           };
           return Promise.resolve()
             .then(() => {
-              if (params.schema) {
-                const { error, value } = Joi.validate(mess, params.schema);
+              if (schema) {
+                const { error, value } = Joi.validate(mess, schema);
                 if (error) {
                   config.transport.log(
                     "listen_rpc_message_fails_validation",
