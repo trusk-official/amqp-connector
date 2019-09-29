@@ -4,7 +4,7 @@ const {
   DEFAULT_EXCHANGE
 } = require("../src/constants");
 
-const subscribeQualifierParser = qualifier => {
+const subscribeQualifierParser = (qualifier, params = { realm: null }) => {
   let type = null;
   let exchange = null;
   let routingKey;
@@ -21,13 +21,17 @@ const subscribeQualifierParser = qualifier => {
   }
   return {
     type,
-    exchange: !exchange ? DEFAULT_EXCHANGE[type] : exchange,
-    routingKey: routingKey === undefined ? "" : routingKey,
-    queue: queue || ""
+    exchange: `${params.realm || ""}${
+      !exchange ? DEFAULT_EXCHANGE[type] : exchange
+    }`,
+    routingKey: `${params.realm || ""}${
+      routingKey === undefined ? "" : routingKey
+    }`,
+    queue: `${params.realm || ""}${queue || ""}`
   };
 };
 
-const publishQualifierParser = qualifier => {
+const publishQualifierParser = (qualifier, params = { realm: null }) => {
   let type = null;
   let exchange = null;
   let routingKey;
@@ -46,9 +50,13 @@ const publishQualifierParser = qualifier => {
   }
   return {
     type,
-    exchange: !exchange ? DEFAULT_EXCHANGE[type] || "" : exchange,
-    routingKey: routingKey === undefined ? "" : routingKey,
-    queue: queue || ""
+    exchange: `${params.realm || ""}${
+      !exchange ? DEFAULT_EXCHANGE[type] || "" : exchange
+    }`,
+    routingKey: `${params.realm || ""}${
+      routingKey === undefined ? "" : routingKey
+    }`,
+    queue: `${params.realm || ""}${queue || ""}`
   };
 };
 

@@ -68,7 +68,7 @@ const amqpconnector = conf => {
     message,
     params = { headers: {} }
   ) => {
-    const q = publishQualifierParser(qualifier);
+    const q = publishQualifierParser(qualifier, { realm: chan.realm });
     const args = [
       ...(q.type === "q" ? [q.queue] : [q.exchange, q.routingKey]),
       ...[
@@ -106,14 +106,15 @@ const amqpconnector = conf => {
       dumpQueue: undefined
     }
   ) => {
-    const dlPrefix = params.dlPrefix || "dl_";
+    const dlPrefix = `${chan.realm || ""}${params.dlPrefix || "dl_"}`;
+    const dumpQueue = `${chan.realm || ""}${params.dumpQueue}`;
+    const q = subscribeQualifierParser(qualifier, { realm: chan.realm });
     const retry = Number.isInteger(params.retry)
       ? Math.max(params.retry, 1)
       : null;
     const maxTries = Number.isInteger(params.maxTries)
       ? Math.max(params.maxTries, 1)
       : null;
-    const q = subscribeQualifierParser(qualifier);
     const schema = params.schema && Joi.compile(params.schema);
 
     // eslint-disable-next-line no-underscore-dangle
@@ -157,9 +158,9 @@ const amqpconnector = conf => {
               messageTtl: retry,
               deadLetterExchange: ""
             }),
-            ...(params.dumpQueue
+            ...(dumpQueue
               ? [
-                  channel.assertQueue(params.dumpQueue, {
+                  channel.assertQueue(dumpQueue, {
                     exclusive: false,
                     autoDelete: false
                   })
@@ -266,9 +267,9 @@ const amqpconnector = conf => {
                     e
                   );
                   chan.ack(message);
-                  if (params.dumpQueue) {
+                  if (dumpQueue) {
                     chan.sendToQueue(
-                      params.dumpQueue,
+                      dumpQueue,
                       chan.payloadToBufferForPublish(message.content),
                       {
                         headers: message.properties.headers
@@ -511,6 +512,7 @@ const amqpconnector = conf => {
     }
     const chan = conn.createChannel(params);
     chan.rejectTimeout = params.rejectTimeout;
+    chan.realm = params.realm;
     chan.json = !!p.json;
     chan.addSetup(channel => {
       return Number.isInteger(params.prefetchCount)

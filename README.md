@@ -64,6 +64,7 @@ const channel = connection.buildChannelIfNotExists({
   prefetchCount: 5,
   prefetchGlobal: 10,
   rejectTimeout: 0 // The timeout before a message is rejected (defaults to 0)
+  realm: "my_realm." // scopes every exchange/queue/routing key by adding the realm as prefix
 });
 ```
 
