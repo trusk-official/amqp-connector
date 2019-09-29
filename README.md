@@ -62,7 +62,7 @@ const channel = connection.buildChannelIfNotExists({
   swap_path: path.resolve("./swap/my_channel"),
   swap_size: 50000,
   prefetchCount: 5,
-  prefetchGlobal: 10,
+  prefetchGlobal: true,
   rejectTimeout: 0 // The timeout before a message is rejected (defaults to 0)
   realm: "my_realm." // scopes every exchange/queue/routing key by adding the realm as prefix
 });

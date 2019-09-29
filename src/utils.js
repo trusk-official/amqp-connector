@@ -4,6 +4,13 @@ const {
   DEFAULT_EXCHANGE
 } = require("../src/constants");
 
+/**
+ * A function parses an amqp subscribe qualifier string
+ * @param {string} qualifier - the qualifier string
+ * @param {object} params - the params object
+ * @param {string} params.realm - the channel realm
+ * @return {object} an object of the parsed results
+ */
 const subscribeQualifierParser = (qualifier, params = { realm: null }) => {
   let type = null;
   let exchange = null;
@@ -31,6 +38,13 @@ const subscribeQualifierParser = (qualifier, params = { realm: null }) => {
   };
 };
 
+/**
+ * A function parses an amqp publish qualifier string
+ * @param {string} qualifier - the qualifier string
+ * @param {object} params - the params object
+ * @param {string} params.realm - the channel realm
+ * @return {object} an object of the parsed results
+ */
 const publishQualifierParser = (qualifier, params = { realm: null }) => {
   let type = null;
   let exchange = null;
@@ -60,6 +74,12 @@ const publishQualifierParser = (qualifier, params = { realm: null }) => {
   };
 };
 
+/**
+ * A function that times out a promise
+ * @param {integer} ms - the timeout milliseconds
+ * @param {function} promisef - a function that returns a promise
+ * @return {Promise} The timouted promise
+ */
 const promiseTimeout = (ms, promisef) => {
   let id = null;
   const timeout = new Promise((resolve, reject) => {
@@ -76,6 +96,11 @@ const promiseTimeout = (ms, promisef) => {
   ]);
 };
 
+/**
+ * A function that generates an id
+ * @param {integer} size - the size of the id
+ * @param {string} id - The id
+ */
 const generateStackId = (size = 5) => {
   const CHARS =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
