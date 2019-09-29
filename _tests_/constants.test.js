@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const constants = require("../src/constants");
 
 test("constants", () => {

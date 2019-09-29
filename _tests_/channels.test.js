@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const amqpconnector = require("../src/index");
 
 let amqpconnection = null;

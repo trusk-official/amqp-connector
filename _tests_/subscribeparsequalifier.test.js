@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const { subscribeQualifierParser } = require("../src/utils");
 
 const { EXCHANGE_TYPE, DEFAULT_EXCHANGE } = require("../src/constants");
