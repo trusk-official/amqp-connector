@@ -4,12 +4,18 @@ const stringify = require("json-stringify-safe");
 const R = require("ramda");
 const Joi = require("@hapi/joi");
 const amqp = require("@trusk/amqp-connection-manager");
+const Stream = require("stream");
+
 const {
   subscribeQualifierParser,
   publishQualifierParser,
+  invokeQualifier,
   promiseTimeout,
   generateStackId
 } = require("./utils");
+
+const { INVOKE_TYPE } = require("./constants");
+
 const { version } = require("../package.json");
 
 /**
@@ -358,7 +364,7 @@ const amqpconnector = conf => {
         });
       };
 
-  const invoke =
+  const invokefn =
     /**
      * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
      */
@@ -489,6 +495,151 @@ const amqpconnector = conf => {
         });
       };
 
+  const invokeStream =
+    /**
+     * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
+     */
+    chan =>
+      /**
+       * Invoke an RPC function
+       * @param {string} qualifier - the queue string
+       * @param {object|Buffer} message - The message
+       * @param {object} options - The subscribe options
+       * @param {integer} options.timeout - the timeout (ms) for the call
+       * @param {object} options.headers - Additional headers for the message
+       * @return {Promise} A promise that resolves the function response
+       */
+      (fnName, payload, params = { timeout: 0, headers: {} }) => {
+        const stream = new Stream();
+        const correlationId = uuidv4();
+        let cTag = null;
+        const destroyConsumer = () => {
+          // eslint-disable-next-line no-underscore-dangle
+          if (cTag && chan._channel) {
+            // eslint-disable-next-line no-underscore-dangle
+            chan._channel.cancel(cTag, _ => _);
+          }
+        };
+        if (params.timeout) {
+          setTimeout(() => {
+            destroyConsumer();
+          }, params.timeout);
+        }
+        // eslint-disable-next-line no-underscore-dangle
+        const c = chan._channel;
+        if (!c) {
+          throw new Error("no_channel_available");
+        }
+        // eslint-disable-next-line no-underscore-dangle
+        c._sendToQueue = (...args) => {
+          config.transport.log(
+            "invoke_send_message_to_rpc_queue",
+            fnName,
+            ...args
+          );
+          return c.sendToQueue(...args);
+        };
+        // eslint-disable-next-line no-underscore-dangle
+        c._consume = (fn, cb, cparams) => {
+          return c.consume(
+            fn,
+            (...cbargs) => {
+              config.transport.log(
+                "invoke_rpc_message_returned",
+                fnName,
+                ...cbargs
+              );
+              cb(...cbargs);
+            },
+            cparams
+          );
+        };
+        c.assertQueue("", { exclusive: true, autoDelete: true }).then(queue => {
+          return (
+            c &&
+            c // eslint-disable-line no-underscore-dangle
+              ._consume(
+                queue.queue,
+                async message => {
+                  if (!message) {
+                    return;
+                  }
+                  const data = message.content.toString();
+                  const m = {
+                    ...message,
+                    content: chan.handleMessageContentOnReception(data)
+                  };
+                  if (
+                    m.properties.headers["x-correlation-id"] === correlationId
+                  ) {
+                    if (
+                      m.properties.headers["x-stream-close"] ||
+                      m.properties.headers["x-error"]
+                    ) {
+                      if (m.properties.headers["x-stream-close"]) {
+                        stream.emit("close");
+                      }
+                      if (m.properties.headers["x-stream-error"]) {
+                        stream.emit("error", m.content);
+                      }
+                      destroyConsumer();
+                    }
+                    if (m.properties.headers["x-stream-end"]) {
+                      stream.emit("end");
+                    }
+                    if (m.properties.headers["x-stream-chunk"]) {
+                      stream.emit("data", m.content);
+                    }
+                  }
+                },
+                { noAck: true }
+              )
+              .then(({ consumerTag }) => {
+                cTag = consumerTag;
+                if (!c) {
+                  throw new Error("no_channel_available");
+                }
+                // eslint-disable-next-line no-underscore-dangle
+                return c._sendToQueue(
+                  fnName,
+                  chan.payloadToBufferForPublish(payload),
+                  {
+                    headers: {
+                      ...params.headers,
+                      "x-timestamp": +new Date(),
+                      "x-reply-to": queue.queue,
+                      "x-correlation-id": correlationId,
+                      "x-service":
+                        config.connection.clientProperties["service-name"],
+                      "x-service-version":
+                        config.connection.clientProperties["service-version"],
+
+                      "x-consumer": fnName,
+                      "x-transaction-stack": [
+                        ...((params.headers || {})["x-transaction-stack"] ||
+                          []),
+                        generateStackId()
+                      ]
+                    }
+                  }
+                );
+              })
+          );
+        });
+        return stream;
+      };
+
+  const invoke = chan => (
+    fnName,
+    payload,
+    params = { timeout: 5000, headers: {} }
+  ) => {
+    const qualifier = invokeQualifier(fnName);
+    return (qualifier.type === INVOKE_TYPE.STREAM ? invokeStream : invokefn)(
+      chan
+    )(qualifier.function, payload, params);
+  };
+
   const listen =
     /**
      * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
@@ -560,6 +711,58 @@ const amqpconnector = conf => {
                 })
                 .then(data => {
                   chan.ack(message);
+                  if (data instanceof Stream.Readable) {
+                    return new Promise((resolve, reject) => {
+                      data.on("data", chunk => {
+                        // eslint-disable-next-line no-underscore-dangle
+                        chan._sendToQueue(
+                          message.properties.headers["x-reply-to"],
+                          chunk,
+                          {
+                            headers: {
+                              ...message.properties.headers,
+                              "x-timestamp": +new Date(),
+                              "x-error": false,
+                              "x-stream-chunk": true
+                            }
+                          }
+                        );
+                      });
+                      data.on("end", () => {
+                        // eslint-disable-next-line no-underscore-dangle
+                        chan._sendToQueue(
+                          message.properties.headers["x-reply-to"],
+                          Buffer.from(""),
+                          {
+                            headers: {
+                              ...message.properties.headers,
+                              "x-timestamp": +new Date(),
+                              "x-error": false,
+                              "x-stream-end": true
+                            }
+                          }
+                        );
+                      });
+                      data.on("close", () => {
+                        // eslint-disable-next-line no-underscore-dangle
+                        chan
+                          ._sendToQueue(
+                            message.properties.headers["x-reply-to"],
+                            Buffer.from(""),
+                            {
+                              headers: {
+                                ...message.properties.headers,
+                                "x-timestamp": +new Date(),
+                                "x-error": false,
+                                "x-stream-close": true
+                              }
+                            }
+                          )
+                          .then(resolve);
+                      });
+                      data.on("error", reject);
+                    });
+                  }
                   // eslint-disable-next-line no-underscore-dangle
                   return chan._sendToQueue(
                     message.properties.headers["x-reply-to"],

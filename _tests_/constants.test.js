@@ -9,6 +9,7 @@ test("constants", () => {
   expect(constants.EXCHANGE_TYPE.TOPIC).toBeDefined();
   expect(constants.EXCHANGE_TYPE.HEADERS).toBeDefined();
   expect(constants.EXCHANGES_AVAILABLE).toBeDefined();
+  expect(constants.INVOKE_TYPE).toBeDefined();
   expect(
     constants.EXCHANGES_AVAILABLE.includes(constants.EXCHANGE_TYPE.DIRECT)
   );

@@ -1,7 +1,8 @@
 const {
   EXCHANGE_TYPE,
   EXCHANGES_AVAILABLE,
-  DEFAULT_EXCHANGE
+  DEFAULT_EXCHANGE,
+  INVOKE_TYPE
 } = require("../src/constants");
 
 /**
@@ -75,6 +76,21 @@ const publishQualifierParser = (qualifier, params = { realm: null }) => {
 };
 
 /**
+ * A function parses an amqp invoke qualifier string
+ * @param {string} qualifier - the qualifier string
+ * @param {object} params - the params object
+ * @param {string} params.realm - the channel realm
+ * @return {object} an object of the parsed results
+ */
+const invokeQualifier = (qualifier, params = { realm: null }) => {
+  const matchresult = qualifier.match(`^${INVOKE_TYPE.STREAM}/(.+)`);
+  return {
+    type: `${matchresult ? INVOKE_TYPE.STREAM : INVOKE_TYPE.RPC}`,
+    function: `${params.realm || ""}${matchresult ? matchresult[1] : qualifier}`
+  };
+};
+
+/**
  * A function that times out a promise
  * @param {integer} ms - the timeout milliseconds
  * @param {function} promisef - a function that returns a promise
@@ -113,6 +129,7 @@ const generateStackId = (size = 5) => {
 module.exports = {
   subscribeQualifierParser,
   publishQualifierParser,
+  invokeQualifier,
   promiseTimeout,
   generateStackId
 };

@@ -19,6 +19,7 @@ An middle level [amqp.node](https://github.com/squaremo/amqp.node) wrapper for e
 - Joi message structure validation on message reception (`listen`, `subscribeToMessage`)
 - Provide your own transport to log every microservice message
 - Automatic retry with dead-letter
+- stream over amqp
 
 ## Install
 
@@ -432,6 +433,24 @@ channel.subscribeToMessages(
     dumpQueue: "my-dump-queue" // defaults to none (discard if maxTries is set)
   }
 );
+```
+
+### Stream over AMQP
+
+- channels must be raw
+
+```js
+channel
+  .listen("my-rpc-function-stream-1", async () => {
+    return fs.createReadStream("/path/to/file");
+  });
+
+const stream = channel.invoke(
+  "stream/my-rpc-function-stream-1",
+  Buffer.from("")
+);
+
+stream.pipe(fs.createWriteStream("/path/to/other_file"));
 ```
 
 ### Qualifier structure
