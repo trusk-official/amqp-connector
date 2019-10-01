@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const Promise = require("bluebird");
 const Joi = require("@hapi/joi");
 
@@ -36,8 +38,12 @@ afterAll(async () => {
     return Promise.all([
       channel.deleteExchange("my-direct-validated-exchange-1"),
       channel.deleteExchange("my-direct-validated-exchange-2"),
+        channel.deleteExchange("my-direct-validated-exchange-3"),
+        channel.deleteExchange("my-direct-validated-exchange-4"),
       channel.deleteQueue("my-validated-queue-1"),
-      channel.deleteQueue("my-validated-queue-2")
+      channel.deleteQueue("my-validated-queue-2"),
+      channel.deleteQueue("my-validated-queue-3"),
+      channel.deleteQueue("my-validated-queue-4")
     ]);
   });
 
@@ -46,7 +52,7 @@ afterAll(async () => {
   );
 });
 
-test("message format validation on subscribe", async () => {
+test("message format validation on subscribe (1)", async () => {
   const result = await new Promise((resolve, reject) => {
     const messagesReceived_1 = [];
     const messagesReceived_2 = [];
@@ -108,3 +114,70 @@ test("message format validation on subscribe", async () => {
   expect(result[0].length).toBe(1);
   expect(result[1].length).toBe(0);
 });
+
+/*
+test("message format validation on subscribe (2)", async () => {
+  const result = await new Promise((resolve, reject) => {
+    const messagesReceived_1 = [];
+    const messagesReceived_2 = [];
+    Promise.all([
+      subscribeChannel.subscribeToMessages(
+        "direct/my-direct-validated-exchange-3/my.routing.key/my-validated-queue-3",
+        async ({ message }) => {
+          messagesReceived_1.push(message);
+        },
+        {
+          schema: {
+            content: {
+              properties: {
+                headers: {
+                  "x-service-version": "1.2.3"
+                }
+              }
+            }
+          }
+        }
+      ),
+      subscribeChannel.subscribeToMessages(
+        "direct/my-direct-validated-exchange-4/my.routing.key/my-validated-queue-4",
+        async ({ message }) => {
+          messagesReceived_2.push(message);
+        },
+        {
+          schema: {
+            content: {
+              properties: {
+                headers: {
+                  "x-service-version": "4.5.6"
+                }
+              }
+            }
+          }
+        }
+      )
+    ])
+      .then(() => {
+        return Promise.all([
+          publishChannel.publishMessage(
+            "direct/my-direct-validated-exchange-3/my.routing.key",
+            {
+              foo: "bar"
+            }
+          ),
+          publishChannel.publishMessage(
+            "direct/my-direct-validated-exchange-4/my.routing.key",
+            {
+              foo: "biz"
+            }
+          )
+        ]);
+      })
+      .catch(reject);
+    setTimeout(() => {
+      resolve([messagesReceived_1, messagesReceived_2]);
+    }, 2000);
+  });
+  expect(result[0].length).toBe(1);
+  expect(result[1].length).toBe(0);
+});
+*/

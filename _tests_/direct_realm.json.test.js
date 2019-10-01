@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const Promise = require("bluebird");
 const R = require("ramda");
 const amqpconnector = require("../src/index");
@@ -16,11 +18,13 @@ beforeAll(async () => {
     amqpconnection.on("connect", async () => {
       publishChannel = amqpconnection.buildChannelIfNotExists({
         name: "publishChannel",
-        json: true
+        json: true,
+        realm: "space."
       });
       subscribeChannel = amqpconnection.buildChannelIfNotExists({
         name: "subscribeChannel",
-        json: true
+        json: true,
+        realm: "space."
       });
       Promise.all([
         publishChannel.waitForConnect(),
@@ -33,10 +37,10 @@ beforeAll(async () => {
 afterAll(async () => {
   await publishChannel.addSetup(channel => {
     return Promise.all([
-      channel.deleteExchange("my-direct-exchange-1"),
-      channel.deleteExchange("my-direct-exchange-2"),
-      channel.deleteQueue("my-queue-1"),
-      channel.deleteQueue("my-queue-2")
+      channel.deleteExchange("space.my-direct-exchange-1"),
+      channel.deleteExchange("space.my-direct-exchange-2"),
+      channel.deleteQueue("space.my-queue-1"),
+      channel.deleteQueue("space.my-queue-2")
     ]);
   });
 
@@ -79,8 +83,8 @@ test("publish subscribe direct json on json channel", async () => {
     foo: "bar"
   });
   expect(R.pick(["exchange", "routingKey"], result[0].fields)).toStrictEqual({
-    exchange: "my-direct-exchange-1",
-    routingKey: "my.routing.key"
+    exchange: "space.my-direct-exchange-1",
+    routingKey: "space.my.routing.key"
   });
   expect(
     R.pick(["contentType", "deliveryMode"], result[0].properties)

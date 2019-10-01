@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const Promise = require("bluebird");
 const amqpconnector = require("../src/index");
 
@@ -65,9 +67,19 @@ afterAll(async () => {
       })
       .then(() => {
         return Promise.all([
-          channel.deleteQueue("my-traced-rpc-function-1"),
           channel.deleteQueue("my-traced-rpc-function-2"),
-          channel.deleteQueue("my-traced-rpc-function-3"),
+          channel.deleteQueue("my-traced-rpc-function-3")
+        ]);
+      });
+  });
+  await subscribeChannel1.addSetup(channel => {
+    return Promise.resolve()
+      .then(() => {
+        return Promise.all(cTags.map(t => channel.cancel(t)));
+      })
+      .then(() => {
+        return Promise.all([
+          channel.deleteQueue("my-traced-rpc-function-1"),
           channel.deleteQueue("my-traced-rpc-function-4")
         ]);
       });

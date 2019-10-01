@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const Promise = require("bluebird");
 const amqpconnector = require("../src/index");
 

@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const R = require("ramda");
 const { generateStackId } = require("../src/utils");
 

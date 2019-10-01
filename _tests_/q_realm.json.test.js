@@ -18,11 +18,13 @@ beforeAll(async () => {
     amqpconnection.on("connect", async () => {
       publishChannel = amqpconnection.buildChannelIfNotExists({
         name: "publishChannel",
-        json: true
+        json: true,
+        realm: "space."
       });
       subscribeChannel = amqpconnection.buildChannelIfNotExists({
         name: "subscribeChannel",
-        json: true
+        json: true,
+        realm: "space."
       });
       Promise.all([
         publishChannel.waitForConnect(),
@@ -31,13 +33,14 @@ beforeAll(async () => {
     });
   });
 });
+
 afterAll(async () => {
   await publishChannel.addSetup(channel => {
     return Promise.all([
-      channel.deleteExchange("my-fanout-exchange-1"),
-      channel.deleteExchange("my-fanout-exchange-2"),
-      channel.deleteQueue("my-fanout-queue-1"),
-      channel.deleteQueue("my-fanout-queue-2")
+      channel.deleteExchange("space.any-exchange-1"),
+      channel.deleteExchange("space.any-exchange-2"),
+      channel.deleteQueue("space.my-q-queue-1"),
+      channel.deleteQueue("space.my-q-queue-2")
     ]);
   });
 
@@ -46,7 +49,7 @@ afterAll(async () => {
   );
 });
 
-test("publish subscribe fanout json on json channel", async () => {
+test("publish subscribe q json on json channel", async () => {
   const result = await new Promise((resolve, reject) => {
     const messagesReceived = [];
     setTimeout(() => {
@@ -54,26 +57,26 @@ test("publish subscribe fanout json on json channel", async () => {
     }, 1000);
     subscribeChannel
       .subscribeToMessages(
-        "fanout/my-fanout-exchange-1/my-fanout-queue-1",
+        "direct/any-exchange-1//my-q-queue-1",
         async ({ message }) => {
           messagesReceived.push(message);
         }
       )
       .then(() => {
         return Promise.all([
-          publishChannel.publishMessage("fanout/my-fanout-exchange-1", {
+          publishChannel.publishMessage("q/my-q-queue-1", {
             value: "my.routing.key"
           }),
-          publishChannel.publishMessage("fanout/my-fanout-exchange-1", {
+          publishChannel.publishMessage("q/my-q-queue-1", {
             value: "my.stuff.thing"
           }),
-          publishChannel.publishMessage("fanout/my-fanout-exchange-1", {
+          publishChannel.publishMessage("q/my-q-queue-1", {
             value: "my.thing"
           }),
-          publishChannel.publishMessage("fanout/my-fanout-exchange-1", {
+          publishChannel.publishMessage("q/my-q-queue-1", {
             value: "your.stuff.thing"
           }),
-          publishChannel.publishMessage("fanout/my-fanout-exchange-1", {
+          publishChannel.publishMessage("q/my-q-queue-1", {
             value: "your.stuff"
           })
         ]);
@@ -87,9 +90,15 @@ test("publish subscribe fanout json on json channel", async () => {
   expect(values.includes("my.thing")).toBe(true);
   expect(values.includes("your.stuff.thing")).toBe(true);
   expect(values.includes("your.stuff")).toBe(true);
+  expect(result[0].properties.headers["x-timestamp"]).toBeGreaterThanOrEqual(
+    +new Date() - 1000
+  );
+  expect(result[0].properties.headers["x-timestamp"]).toBeLessThan(
+    +new Date() + 1000
+  );
 });
 
-test("publish subscribe fanout buffer on json channel", async () => {
+test("publish subscribe q buffer on json channel", async () => {
   const result = await new Promise((resolve, reject) => {
     const messagesReceived = [];
     setTimeout(() => {
@@ -97,7 +106,7 @@ test("publish subscribe fanout buffer on json channel", async () => {
     }, 1000);
     subscribeChannel
       .subscribeToMessages(
-        "fanout/my-fanout-exchange-2/my-fanout-queue-2",
+        "direct/any-exchange-2//my-q-queue-2",
         async ({ message }) => {
           messagesReceived.push(message);
         }
@@ -105,7 +114,7 @@ test("publish subscribe fanout buffer on json channel", async () => {
       .then(() => {
         return Promise.all([
           publishChannel.publishMessage(
-            "fanout/my-fanout-exchange-2",
+            "q/my-q-queue-2",
             Buffer.from(
               JSON.stringify({
                 value: "my.routing.key"
@@ -113,7 +122,7 @@ test("publish subscribe fanout buffer on json channel", async () => {
             )
           ),
           publishChannel.publishMessage(
-            "fanout/my-fanout-exchange-2",
+            "q/my-q-queue-2",
             Buffer.from(
               JSON.stringify({
                 value: "my.stuff.thing"
@@ -121,7 +130,7 @@ test("publish subscribe fanout buffer on json channel", async () => {
             )
           ),
           publishChannel.publishMessage(
-            "fanout/my-fanout-exchange-2",
+            "q/my-q-queue-2",
             Buffer.from(
               JSON.stringify({
                 value: "my.thing"
@@ -129,7 +138,7 @@ test("publish subscribe fanout buffer on json channel", async () => {
             )
           ),
           publishChannel.publishMessage(
-            "fanout/my-fanout-exchange-2",
+            "q/my-q-queue-2",
             Buffer.from(
               JSON.stringify({
                 value: "your.stuff.thing"
@@ -137,7 +146,7 @@ test("publish subscribe fanout buffer on json channel", async () => {
             )
           ),
           publishChannel.publishMessage(
-            "fanout/my-fanout-exchange-2",
+            "q/my-q-queue-2",
             Buffer.from(
               JSON.stringify({
                 value: "your.stuff"
@@ -152,4 +161,10 @@ test("publish subscribe fanout buffer on json channel", async () => {
   expect(contentType.length).toBe(5);
   expect(R.uniq(contentType).length).toBe(1);
   expect(contentType[0]).toBe("Buffer");
+  expect(result[0].properties.headers["x-timestamp"]).toBeGreaterThanOrEqual(
+    +new Date() - 1000
+  );
+  expect(result[0].properties.headers["x-timestamp"]).toBeLessThan(
+    +new Date() + 1000
+  );
 });

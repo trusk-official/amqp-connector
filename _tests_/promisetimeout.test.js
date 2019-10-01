@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const { promiseTimeout } = require("../src/utils");
 
 test("promise timeout resolve on time", async () => {

@@ -18,6 +18,8 @@ An middle level [amqp.node](https://github.com/squaremo/amqp.node) wrapper for e
 - Built-in distributed tracing
 - Joi message structure validation on message reception (`listen`, `subscribeToMessage`)
 - Provide your own transport to log every microservice message
+- Automatic retry with dead-letter
+- stream over amqp
 
 ## Install
 
@@ -61,7 +63,9 @@ const channel = connection.buildChannelIfNotExists({
   swap_path: path.resolve("./swap/my_channel"),
   swap_size: 50000,
   prefetchCount: 5,
-  prefetchGlobal: 10
+  prefetchGlobal: true,
+  rejectTimeout: 0 // The timeout before a message is rejected (defaults to 0)
+  realm: "my_realm." // scopes every exchange/queue/routing key by adding the realm as prefix
 });
 ```
 
@@ -88,6 +92,13 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.nack - a message nack arguments object
+ * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {number} options.retry - the ttl for retrying the message on top of the queue. Will create a dead letter exchange and no consumer queue to enable it
+ * @param {number} options.dlPrefix - the prefix for the dead letter exchange and no consumer queue
+ * @param {number} options.maxTries - The number of tries when sent to deadletter (defaults to none (unlimited retries))
+ * @param {string} options.dumpQueue - the queue where to send the message when the maxTries is reached (defaults to none (discards if maxTries is set))
  * @return {Promise<object>} A promise that resolves { consumerTag }, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
  */
 channel.subscribeToMessages(
@@ -139,6 +150,13 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.nack - a message nack arguments object
+ * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {number} options.retry - the ttl for retrying the message on top of the queue. Will create a dead letter exchange and no consumer queue to enable it
+ * @param {number} options.dlPrefix - the prefix for the dead letter exchange and no consumer queue
+ * @param {number} options.maxTries - The number of tries when sent to deadletter (defaults to none (unlimited retries))
+ * @param {string} options.dumpQueue - the queue where to send the message when the maxTries is reached (defaults to none (discards if maxTries is set))
  * @return {Promise<object>} A promise that resolves { consumerTag }, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
  */
 channel.subscribeToMessages(
@@ -181,6 +199,13 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.nack - a message nack arguments object
+ * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {number} options.retry - the ttl for retrying the message on top of the queue. Will create a dead letter exchange and no consumer queue to enable it
+ * @param {number} options.dlPrefix - the prefix for the dead letter exchange and no consumer queue
+ * @param {number} options.maxTries - The number of tries when sent to deadletter (defaults to none (unlimited retries))
+ * @param {string} options.dumpQueue - the queue where to send the message when the maxTries is reached (defaults to none (discards if maxTries is set))
  * @return {Promise<object>} A promise that resolves { consumerTag }, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
  */
 channel.subscribeToMessages(
@@ -223,6 +248,13 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.nack - a message nack arguments object
+ * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {number} options.retry - the ttl for retrying the message on top of the queue. Will create a dead letter exchange and no consumer queue to enable it
+ * @param {number} options.dlPrefix - the prefix for the dead letter exchange and no consumer queue
+ * @param {number} options.maxTries - The number of tries when sent to deadletter (defaults to none (unlimited retries))
+ * @param {string} options.dumpQueue - the queue where to send the message when the maxTries is reached (defaults to none (discards if maxTries is set))
  * @return {Promise<object>} A promise that resolves { consumerTag }, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
  */
 channel.subscribeToMessages(
@@ -275,6 +307,13 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.nack - a message nack arguments object
+ * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
+ * @param {number} options.retry - the ttl for retrying the message on top of the queue. Will create a dead letter exchange and no consumer queue to enable it
+ * @param {number} options.dlPrefix - the prefix for the dead letter exchange and no consumer queue
+ * @param {number} options.maxTries - The number of tries when sent to deadletter (defaults to none (unlimited retries))
+ * @param {string} options.dumpQueue - the queue where to send the message when the maxTries is reached (defaults to none (discards if maxTries is set))
  * @return {Promise<object>} A promise that resolves { consumerTag }, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
  */
 channel.subscribeToMessages(
@@ -374,6 +413,44 @@ const result = await channel
   .then(response => {
     // response.content.value === 42 * 2 * 3 * 4 * 5;
   });
+```
+
+### Dead letter
+
+  - this will create a dead letter exchange `my_dl_5000` and a no consumer queue `my_dl_5000` with adequate arguments to enable automatic retry on top of the queue every 5000ms.
+  - providing a `maxTries` value will make the broker retest the message `maxTries - 1` (otherwise it is endless retries), then it will either `ack` the message (which basically discards it) or send it to the `dumpQueue`.
+
+```js
+channel.subscribeToMessages(
+  "direct/my-direct-exchange/my.routing.key/my-queue",
+  async ({ message }) => {
+    // handle
+  },
+  {
+    retry: 5000,
+    dlPrefix: "my_dl_", // defaults to dl_
+    maxTries: 10, // defaults to none (endless)
+    dumpQueue: "my-dump-queue" // defaults to none (discard if maxTries is set)
+  }
+);
+```
+
+### Stream over AMQP
+
+- channels must be raw
+
+```js
+channel
+  .listen("my-rpc-function-stream-1", async () => {
+    return fs.createReadStream("/path/to/file");
+  });
+
+const stream = channel.invoke(
+  "stream/my-rpc-function-stream-1",
+  Buffer.from("")
+);
+
+stream.pipe(fs.createWriteStream("/path/to/other_file"));
 ```
 
 ### Qualifier structure

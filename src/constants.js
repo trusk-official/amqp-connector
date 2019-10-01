@@ -19,8 +19,14 @@ const DEFAULT_EXCHANGE = {
   [EXCHANGE_TYPE.TOPIC]: "amq.topic"
 };
 
+const INVOKE_TYPE = {
+  RPC: "rpc",
+  STREAM: "stream"
+};
+
 module.exports = {
   EXCHANGES_AVAILABLE,
   EXCHANGE_TYPE,
-  DEFAULT_EXCHANGE
+  DEFAULT_EXCHANGE,
+  INVOKE_TYPE
 };
