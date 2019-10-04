@@ -384,6 +384,9 @@ const amqpconnector = conf => {
           let cTag = null;
           // eslint-disable-next-line no-underscore-dangle
           const c = chan._channel;
+          if (!c) {
+            throw new Error("no_channel_available");
+          }
           // eslint-disable-next-line no-underscore-dangle
           c._sendToQueue = (...args) => {
             config.transport.log(
