@@ -268,7 +268,7 @@ const amqpconnector = conf => {
                         )
                       };
                       if (schema) {
-                        const { error, value } = Joi.validate(mess, schema);
+                        const { error, value } = schema.validate(mess);
                         if (error) {
                           config.transport.log(
                             "subscribe_message_fails_validation",
@@ -384,6 +384,9 @@ const amqpconnector = conf => {
           let cTag = null;
           // eslint-disable-next-line no-underscore-dangle
           const c = chan._channel;
+          if (!c) {
+            throw new Error("no_channel_available");
+          }
           // eslint-disable-next-line no-underscore-dangle
           c._sendToQueue = (...args) => {
             config.transport.log(
@@ -687,7 +690,7 @@ const amqpconnector = conf => {
               return Promise.resolve()
                 .then(() => {
                   if (schema) {
-                    const { error, value } = Joi.validate(mess, schema);
+                    const { error, value } = schema.validate(mess);
                     if (error) {
                       config.transport.log(
                         "listen_rpc_message_fails_validation",
