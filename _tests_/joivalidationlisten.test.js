@@ -101,9 +101,8 @@ test("message format validation on listen 2", async () => {
       value: 42
     })
     .catch(e => e);
-  expect(result.content.isJoi).toBe(true);
-  expect(result.content.name).toBe("ValidationError");
+  expect(result.content.stack.split(":")[0]).toBe("ValidationError");
   expect(result.content.details[0].message).toBe(
-    `"x-service-version" must be one of [4.5.6]`
+    `"properties.headers.x-service-version" must be [4.5.6]`
   );
 });

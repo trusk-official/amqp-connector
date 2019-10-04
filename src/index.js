@@ -268,7 +268,7 @@ const amqpconnector = conf => {
                         )
                       };
                       if (schema) {
-                        const { error, value } = Joi.validate(mess, schema);
+                        const { error, value } = schema.validate(mess);
                         if (error) {
                           config.transport.log(
                             "subscribe_message_fails_validation",
@@ -690,7 +690,7 @@ const amqpconnector = conf => {
               return Promise.resolve()
                 .then(() => {
                   if (schema) {
-                    const { error, value } = Joi.validate(mess, schema);
+                    const { error, value } = schema.validate(mess);
                     if (error) {
                       config.transport.log(
                         "listen_rpc_message_fails_validation",
