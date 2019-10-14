@@ -167,7 +167,13 @@ const amqpconnector = conf => {
         const maxTries = Number.isInteger(params.maxTries)
           ? Math.max(params.maxTries, 1)
           : null;
-        const schema = params.schema && Joi.compile(params.schema);
+
+        let schema = null;
+        if (params.schema) {
+          schema = Joi.isSchema(params.schema)
+            ? params.schema
+            : Joi.build(params.schema);
+        }
 
         // eslint-disable-next-line no-underscore-dangle
         const _cb = async (...args) => {
@@ -663,7 +669,12 @@ const amqpconnector = conf => {
      * @return {Promise<object>} A promise that resolves { consumerTag }, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
      */
       async (fnName, callback, params = { queue: {} }) => {
-        const schema = params.schema && Joi.compile(params.schema);
+        let schema = null;
+        if (params.schema) {
+          schema = Joi.isSchema(params.schema)
+            ? params.schema
+            : Joi.build(params.schema);
+        }
 
         return chan.addSetup(channel => {
           // eslint-disable-next-line no-underscore-dangle
