@@ -2,13 +2,13 @@ jest.setTimeout(30000);
 
 const amqpconnector = require("../src/index");
 
-let amqpconnection = null;
+const amqpconnection = amqpconnector({
+  urls: ["amqp://localhost:5672"],
+  serviceName: "my_service",
+  serviceVersion: "1.2.3"
+}).connect();
+
 beforeAll(async () => {
-  amqpconnection = amqpconnector({
-    urls: ["amqp://localhost:5672"],
-    serviceName: "my_service",
-    serviceVersion: "1.2.3"
-  }).connect();
   return new Promise(resolve => {
     amqpconnection.on("connect", async () => {
       resolve();

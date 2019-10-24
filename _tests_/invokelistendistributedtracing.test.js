@@ -3,59 +3,44 @@ jest.setTimeout(30000);
 const Promise = require("bluebird");
 const amqpconnector = require("../src/index");
 
-let amqpconnection1 = null;
-let amqpconnection2 = null;
-let publishChannel1 = null;
-let subscribeChannel1 = null;
-let publishChannel2 = null;
-let subscribeChannel2 = null;
 const cTags = [];
 
-beforeAll(async () => {
-  amqpconnection1 = amqpconnector({
-    urls: ["amqp://localhost:5672"],
-    serviceName: "my_service_1",
-    serviceVersion: "1.2.3"
-  }).connect();
-  amqpconnection2 = amqpconnector({
-    urls: ["amqp://localhost:5672"],
-    serviceName: "my_service_2",
-    serviceVersion: "4.5.6"
-  }).connect();
+const amqpconnection1 = amqpconnector({
+  urls: ["amqp://localhost:5672"],
+  serviceName: "my_service_1",
+  serviceVersion: "1.2.3"
+}).connect();
 
+const amqpconnection2 = amqpconnector({
+  urls: ["amqp://localhost:5672"],
+  serviceName: "my_service_2",
+  serviceVersion: "4.5.6"
+}).connect();
+
+const publishChannel1 = amqpconnection1.buildChannelIfNotExists({
+  name: "publishChannel1",
+  json: true
+});
+
+const subscribeChannel1 = amqpconnection1.buildChannelIfNotExists({
+  name: "subscribeChannel1",
+  json: true
+});
+
+const publishChannel2 = amqpconnection2.buildChannelIfNotExists({
+  name: "publishChannel2",
+  json: true
+});
+
+const subscribeChannel2 = amqpconnection2.buildChannelIfNotExists({
+  name: "subscribeChannel2",
+  json: true
+});
+
+beforeAll(async () => {
   return Promise.all([
-    new Promise(resolve => {
-      amqpconnection1.on("connect", async () => {
-        publishChannel1 = amqpconnection1.buildChannelIfNotExists({
-          name: "publishChannel1",
-          json: true
-        });
-        subscribeChannel1 = amqpconnection1.buildChannelIfNotExists({
-          name: "subscribeChannel1",
-          json: true
-        });
-        Promise.all([
-          publishChannel1.waitForConnect(),
-          subscribeChannel1.waitForConnect()
-        ]).then(resolve);
-      });
-    }),
-    new Promise(resolve => {
-      amqpconnection2.on("connect", async () => {
-        publishChannel2 = amqpconnection2.buildChannelIfNotExists({
-          name: "publishChannel2",
-          json: true
-        });
-        subscribeChannel2 = amqpconnection2.buildChannelIfNotExists({
-          name: "subscribeChannel2",
-          json: true
-        });
-        Promise.all([
-          publishChannel2.waitForConnect(),
-          subscribeChannel2.waitForConnect()
-        ]).then(resolve);
-      });
-    })
+    subscribeChannel1.waitForConnect(),
+    subscribeChannel2.waitForConnect()
   ]);
 });
 

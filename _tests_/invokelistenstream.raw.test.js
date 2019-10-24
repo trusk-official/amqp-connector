@@ -5,31 +5,24 @@ const fs = require("fs");
 const path = require("path");
 const amqpconnector = require("../src/index");
 
-let amqpconnection = null;
-let publishChannel = null;
-let subscribeChannel = null;
 const cTags = [];
 
+const amqpconnection = amqpconnector({
+  urls: ["amqp://localhost:5672"],
+  serviceName: "my_service",
+  serviceVersion: "1.2.3"
+}).connect();
+
+const publishChannel = amqpconnection.buildChannelIfNotExists({
+  name: "publishChannel"
+});
+
+const subscribeChannel = amqpconnection.buildChannelIfNotExists({
+  name: "subscribeChannel"
+});
+
 beforeAll(async () => {
-  amqpconnection = amqpconnector({
-    urls: ["amqp://localhost:5672"],
-    serviceName: "my_service",
-    serviceVersion: "1.2.3"
-  }).connect();
-  return new Promise(resolve => {
-    amqpconnection.on("connect", async () => {
-      publishChannel = amqpconnection.buildChannelIfNotExists({
-        name: "publishChannel"
-      });
-      subscribeChannel = amqpconnection.buildChannelIfNotExists({
-        name: "subscribeChannel"
-      });
-      Promise.all([
-        publishChannel.waitForConnect(),
-        subscribeChannel.waitForConnect()
-      ]).then(resolve);
-    });
-  });
+  return subscribeChannel.waitForConnect();
 });
 
 afterAll(async () => {
