@@ -16,12 +16,18 @@ beforeAll(async () => {
   });
 });
 
-afterAll(async () => {
-  return amqpconnection.close();
-});
-
 let channeldefault = null;
 let channel1 = null;
+
+afterAll(async () => {
+  channel1.on("error", () => {
+    // seems that messing around with channels triggers IllegalOperationError: Connection closing
+  });
+  channeldefault.on("error", () => {
+    // seems that messing around with channels triggers IllegalOperationError: Connection closing
+  });
+  return amqpconnection.close();
+});
 
 test("creates an unnamed channel properly", async () => {
   channeldefault = amqpconnection.buildChannelIfNotExists({
