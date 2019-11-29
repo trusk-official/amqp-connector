@@ -2,13 +2,13 @@ jest.setTimeout(30000);
 
 const amqpconnector = require("../src/index");
 
-let amqpconnection = null;
+const amqpconnection = amqpconnector({
+  urls: ["amqp://localhost:5672"],
+  serviceName: "my_service",
+  serviceVersion: "1.2.3"
+}).connect();
+
 beforeAll(async () => {
-  amqpconnection = amqpconnector({
-    urls: ["amqp://localhost:5672"],
-    serviceName: "my_service",
-    serviceVersion: "1.2.3"
-  }).connect();
   return new Promise(resolve => {
     amqpconnection.on("connect", async () => {
       resolve();
@@ -16,12 +16,18 @@ beforeAll(async () => {
   });
 });
 
-afterAll(async () => {
-  return amqpconnection.close();
-});
-
 let channeldefault = null;
 let channel1 = null;
+
+afterAll(async () => {
+  channel1.on("error", () => {
+    // seems that messing around with channels triggers IllegalOperationError: Connection closing
+  });
+  channeldefault.on("error", () => {
+    // seems that messing around with channels triggers IllegalOperationError: Connection closing
+  });
+  return amqpconnection.close();
+});
 
 test("creates an unnamed channel properly", async () => {
   channeldefault = amqpconnection.buildChannelIfNotExists({

@@ -3,24 +3,19 @@ jest.setTimeout(30000);
 const Promise = require("bluebird");
 const amqpconnector = require("../src/index");
 
-let amqpconnection = null;
-let subscribeChannel = null;
+const amqpconnection = amqpconnector({
+  urls: ["amqp://localhost:5672"],
+  serviceName: "my_service",
+  serviceVersion: "1.2.3"
+}).connect();
+
+const subscribeChannel = amqpconnection.buildChannelIfNotExists({
+  name: "subscribeChannel",
+  json: true
+});
 
 beforeAll(async () => {
-  amqpconnection = amqpconnector({
-    urls: ["amqp://localhost:5672"],
-    serviceName: "my_service",
-    serviceVersion: "1.2.3"
-  }).connect();
-  return new Promise(resolve => {
-    amqpconnection.on("connect", async () => {
-      subscribeChannel = amqpconnection.buildChannelIfNotExists({
-        name: "subscribeChannel",
-        json: true
-      });
-      Promise.all([subscribeChannel.waitForConnect()]).then(resolve);
-    });
-  });
+  return subscribeChannel.waitForConnect();
 });
 
 afterAll(async () => {

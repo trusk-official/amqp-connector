@@ -41,7 +41,9 @@ const amqpconnector = conf => {
     ...conf
   };
   // todo validate config format
-  config.urls = config.urls.map(u => url.parse(u));
+  config.urls = config.urls
+    .map(u => (typeof u === "string" ? { url: u } : u))
+    .map(uo => Object.assign(uo, { url: url.parse(uo.url) }));
   config.connection = {
     noDelay: true,
     clientProperties: {},
@@ -899,7 +901,7 @@ const amqpconnector = conf => {
     connect: () => {
       if (!ctx.connection) {
         ctx.connection = amqp.connect(
-          config.urls.map(u => u.href),
+          config.urls.map(uo => ({ ...uo, url: uo.url.href })),
           config.connection
         );
         ctx.connection.buildChannel = buildChannel(ctx.connection);

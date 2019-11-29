@@ -1,6 +1,5 @@
 # AMQP connector
 
-
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/master/LICENSE) [![CircleCI](https://circleci.com/gh/trusk-official/amqp-connector.svg?style=svg)](https://circleci.com/gh/trusk-official/amqp-connector) [![npm version](https://badge.fury.io/js/%40trusk%2Famqp-connector.svg)](https://badge.fury.io/js/%40trusk%2Famqp-connector) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://reactjs.org/docs/how-to-contribute.html#your-first-pull-request)
 
 An middle level [amqp.node](https://github.com/squaremo/amqp.node) wrapper for every day use. It requires **node.js >= 6**.
@@ -105,7 +104,8 @@ channel.subscribeToMessages(
   "direct/my-direct-exchange/my.routing.key/my-queue",
   async ({ message }) => {
     // handle message
-  }, {
+  },
+  {
     schema: Joi.object({
       content: Joi.object(),
       properties: Joi.object({
@@ -114,6 +114,54 @@ channel.subscribeToMessages(
         }).unknown()
       }).unknown()
     }).unknown()
+  }
+);
+
+// or use a text schema definition
+channel.subscribeToMessages(
+  "direct/my-direct-exchange/my.routing.key/my-queue",
+  async ({ message }) => {
+    // handle message
+  },
+  {
+    schema: {
+      type: "object",
+      flags: {
+        unknown: true
+      },
+      keys: {
+        content: {
+          type: "object"
+        },
+        properties: {
+          type: "object",
+          flags: {
+            unknown: true
+          },
+          keys: {
+            headers: {
+              type: "object",
+              flags: {
+                unknown: true
+              },
+              keys: {
+                "x-service-version": {
+                  type: "string",
+                  rules: [
+                    {
+                      name: "pattern",
+                      args: {
+                        regex: "/^1.2.\\d$/"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 );
 
@@ -278,13 +326,17 @@ channel.subscribeToMessages(
  * @param {object} options.headers - Additional headers for the message
  * @return {Promise<Bool>} A promise that resolves Bool, see http://www.squaremobius.net/amqp.node/channel_api.html#channel_publish
  */
-channel.publishMessage("headers/my-headers-exchange", {
-  foo: "bar"
-}, {
-  headers: {
-    customheader: "my-header"
+channel.publishMessage(
+  "headers/my-headers-exchange",
+  {
+    foo: "bar"
+  },
+  {
+    headers: {
+      customheader: "my-header"
+    }
   }
-});
+);
 ```
 
 ### Send To Queue
@@ -338,7 +390,7 @@ channel.publishMessage("q/my-queue", {
 
 ### RPC
 
-  - call a remote function through `amqp` (note that `invoke` is *fail fast* and does not benefit of [node-amqp-connection-manager](https://github.com/trusk-official/node-amqp-connection-manager)'s features)
+- call a remote function through `amqp` (note that `invoke` is _fail fast_ and does not benefit of [node-amqp-connection-manager](https://github.com/trusk-official/node-amqp-connection-manager)'s features)
 
 ```js
 const connection = amqpconnector().connect();
@@ -376,7 +428,7 @@ const result = await channel.invoke("my-rpc-function", { value: 1337 }); // { va
 
 ### Distributed tracing
 
-  - By using the contextual `invoke` and `publishMessage` functions you can easily trace the journey of a message
+- By using the contextual `invoke` and `publishMessage` functions you can easily trace the journey of a message
 
 ```js
 channel.listen("my-traced-rpc-function-4", async ({ message }) => {
@@ -417,8 +469,8 @@ const result = await channel
 
 ### Dead letter
 
-  - this will create a dead letter exchange `my_dl_5000` and a no consumer queue `my_dl_5000` with adequate arguments to enable automatic retry on top of the queue every 5000ms.
-  - providing a `maxTries` value will make the broker retest the message `maxTries - 1` (otherwise it is endless retries), then it will either `ack` the message (which basically discards it) or send it to the `dumpQueue`.
+- this will create a dead letter exchange `my_dl_5000` and a no consumer queue `my_dl_5000` with adequate arguments to enable automatic retry on top of the queue every 5000ms.
+- providing a `maxTries` value will make the broker retest the message `maxTries - 1` (otherwise it is endless retries), then it will either `ack` the message (which basically discards it) or send it to the `dumpQueue`.
 
 ```js
 channel.subscribeToMessages(
@@ -440,10 +492,9 @@ channel.subscribeToMessages(
 - channels must be raw
 
 ```js
-channel
-  .listen("my-rpc-function-stream-1", async () => {
-    return fs.createReadStream("/path/to/file");
-  });
+channel.listen("my-rpc-function-stream-1", async () => {
+  return fs.createReadStream("/path/to/file");
+});
 
 const stream = channel.invoke(
   "stream/my-rpc-function-stream-1",
