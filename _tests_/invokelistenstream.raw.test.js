@@ -38,7 +38,7 @@ afterAll(async () => {
   );
 });
 
-test("invoke subscribe stream function", async () => {
+test.skip("invoke subscribe stream function", async () => {
   const to_stream_path_file = path.resolve(`${__dirname}/data/text_file.txt`);
   const streamed_path_file = path.resolve(`${__dirname}/data/text_file_2.txt`);
   await new Promise(resolve => {
