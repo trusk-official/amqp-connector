@@ -1,5 +1,5 @@
 const url = require("url");
-const uuidv4 = require("uuid/v4");
+const { v4: uuidv4 } = require("uuid");
 const stringify = require("json-stringify-safe");
 const R = require("ramda");
 const Joi = require("@hapi/joi");
@@ -11,7 +11,7 @@ const {
   publishQualifierParser,
   invokeQualifier,
   promiseTimeout,
-  generateStackId
+  generateStackId,
 } = require("./utils");
 
 const { INVOKE_TYPE } = require("./constants");
@@ -27,7 +27,7 @@ const { version } = require("../package.json");
  * @param {object} transport - a logger instance
  * @return {object} An object containing the connect function to open an amqp connection
  */
-const amqpconnector = conf => {
+const amqpconnector = (conf) => {
   const config = {
     urls: ["amqp://localhost:5672"],
     serviceName: "default",
@@ -36,33 +36,34 @@ const amqpconnector = conf => {
       info: () => {},
       error: () => {},
       warn: () => {},
-      silly: () => {}
+      silly: () => {},
+      debug: () => {},
     },
-    ...conf
+    ...conf,
   };
   // todo validate config format
   config.urls = config.urls
-    .map(u => (typeof u === "string" ? { url: u } : u))
-    .map(uo => Object.assign(uo, { url: url.parse(uo.url) }));
+    .map((u) => (typeof u === "string" ? { url: u } : u))
+    .map((uo) => Object.assign(uo, { url: url.parse(uo.url) }));
   config.connection = {
     noDelay: true,
     clientProperties: {},
-    ...config.connection
+    ...config.connection,
   };
   config.connection.clientProperties = {
     ...{
       "amqp-connector-version": version,
       "service-name": config.serviceName,
-      "service-version": config.serviceVersion
-    }
+      "service-version": config.serviceVersion,
+    },
   };
 
   const ctx = {
     connection: null,
-    channels: {}
+    channels: {},
   };
 
-  const callWithContextHeaders = fn => headers => (
+  const callWithContextHeaders = (fn) => (headers) => (
     qualifierOrFn,
     messageOrPayload,
     params = { timeout: 5000, headers: {} }
@@ -74,9 +75,9 @@ const amqpconnector = conf => {
           ...params.headers,
           "x-origin-service": headers["x-service"],
           "x-origin-consumer": headers["x-consumer"],
-          "x-transaction-stack": headers["x-transaction-stack"]
-        }
-      }
+          "x-transaction-stack": headers["x-transaction-stack"],
+        },
+      },
     });
   };
 
@@ -84,7 +85,7 @@ const amqpconnector = conf => {
     /**
      * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
      */
-    chan =>
+    (chan) =>
       /**
        * Publish to an exchange
        * @param {string} qualifier - the publish string, see Publish qualifier
@@ -111,11 +112,11 @@ const amqpconnector = conf => {
                   config.connection.clientProperties["service-version"],
                 "x-transaction-stack": [
                   ...((params.headers || {})["x-transaction-stack"] || []),
-                  generateStackId()
-                ]
-              }
-            }
-          ]
+                  generateStackId(),
+                ],
+              },
+            },
+          ],
         ];
         return chan[q.type === "q" ? "_sendToQueue" : "_publish"](...args);
       };
@@ -124,7 +125,7 @@ const amqpconnector = conf => {
     /**
      * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
      */
-    chan =>
+    (chan) =>
       /**
    * @callback subscribeCallback
    * @param {object} message - an amqp message, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
@@ -157,7 +158,7 @@ const amqpconnector = conf => {
           headers: {},
           nack: { allUpTo: false, requeue: false },
           retry: undefined,
-          dumpQueue: undefined
+          dumpQueue: undefined,
         }
       ) => {
         const dlPrefix = `${chan.realm || ""}${params.dlPrefix || "dl_"}`;
@@ -179,14 +180,14 @@ const amqpconnector = conf => {
 
         // eslint-disable-next-line no-underscore-dangle
         const _cb = async (...args) => {
-          config.transport.log(
+          config.transport.debug(
             "subscribe_message_received",
             qualifier,
             args[0].message
           );
           return cb(...args)
-            .then(o => {
-              config.transport.log(
+            .then((o) => {
+              config.transport.debug(
                 "subscribe_message_handled",
                 qualifier,
                 args[0].message,
@@ -194,8 +195,8 @@ const amqpconnector = conf => {
               );
               return o;
             })
-            .catch(e => {
-              config.transport.log(
+            .catch((e) => {
+              config.transport.debug(
                 "subscribe_message_rejected",
                 qualifier,
                 args[0].message,
@@ -205,27 +206,27 @@ const amqpconnector = conf => {
             });
         };
 
-        return chan.addSetup(channel => {
+        return chan.addSetup((channel) => {
           return (retry
             ? Promise.all([
                 channel.assertExchange(`${dlPrefix}${retry}`, "fanout", {
                   durable: true,
-                  autoDelete: false
+                  autoDelete: false,
                 }),
                 channel.assertQueue(`${dlPrefix}${retry}`, {
                   exclusive: false,
                   autoDelete: false,
                   messageTtl: retry,
-                  deadLetterExchange: ""
+                  deadLetterExchange: "",
                 }),
                 ...(dumpQueue
                   ? [
                       channel.assertQueue(dumpQueue, {
                         exclusive: false,
-                        autoDelete: false
-                      })
+                        autoDelete: false,
+                      }),
                     ]
-                  : [])
+                  : []),
               ]).then(() => {
                 return channel.bindQueue(
                   `${dlPrefix}${retry}`,
@@ -240,7 +241,7 @@ const amqpconnector = conf => {
                 ? channel.assertExchange(q.exchange, q.type, {
                     durable: true,
                     autoDelete: false,
-                    ...params.exchange
+                    ...params.exchange,
                   })
                 : Promise.resolve(),
               channel.assertQueue(q.queue, {
@@ -250,10 +251,10 @@ const amqpconnector = conf => {
                 ...(retry
                   ? {
                       deadLetterExchange: `${dlPrefix}${retry}`,
-                      deadLetterRoutingKey: q.queue
+                      deadLetterRoutingKey: q.queue,
                     }
-                  : {})
-              })
+                  : {}),
+              }),
             ])
               .then(() =>
                 q.exchange
@@ -266,19 +267,19 @@ const amqpconnector = conf => {
                   : Promise.resolve()
               )
               .then(() => {
-                return channel.consume(q.queue, async message => {
+                return channel.consume(q.queue, async (message) => {
                   try {
                     if (message) {
                       let mess = {
                         ...message,
                         content: chan.handleMessageContentOnReception(
                           message.content
-                        )
+                        ),
                       };
                       if (schema) {
                         const { error, value } = schema.validate(mess);
                         if (error) {
-                          config.transport.log(
+                          config.transport.debug(
                             "subscribe_message_fails_validation",
                             qualifier,
                             mess,
@@ -300,7 +301,7 @@ const amqpconnector = conf => {
                           "x-service-version":
                             config.connection.clientProperties[
                               "service-version"
-                            ]
+                            ],
                         }),
                         publishMessage: callWithContextHeaders(
                           chan.publishMessage
@@ -312,15 +313,15 @@ const amqpconnector = conf => {
                           "x-service-version":
                             config.connection.clientProperties[
                               "service-version"
-                            ]
-                        })
+                            ],
+                        }),
                       });
                       chan.ack(message);
                     }
                   } catch (e) {
                     const deathCounts = (
                       (message.properties.headers["x-death"] || []).find(
-                        death => death.queue === q.queue
+                        (death) => death.queue === q.queue
                       ) || {}
                     ).count;
                     if (
@@ -328,7 +329,7 @@ const amqpconnector = conf => {
                       maxTries &&
                       deathCounts >= maxTries - 1
                     ) {
-                      config.transport.log(
+                      config.transport.debug(
                         "message_nack_stop_retrying",
                         qualifier,
                         message,
@@ -340,10 +341,10 @@ const amqpconnector = conf => {
                           dumpQueue,
                           chan.payloadToBufferForPublish(message.content),
                           {
-                            headers: message.properties.headers
+                            headers: message.properties.headers,
                           }
                         );
-                        config.transport.log(
+                        config.transport.debug(
                           "message_ack_sent_to_dump_queue",
                           qualifier,
                           message,
@@ -352,7 +353,7 @@ const amqpconnector = conf => {
                       }
                     } else {
                       setTimeout(() => {
-                        config.transport.log(
+                        config.transport.debug(
                           "message_nack",
                           qualifier,
                           message,
@@ -376,7 +377,7 @@ const amqpconnector = conf => {
     /**
      * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
      */
-    chan =>
+    (chan) =>
       /**
        * Invoke an RPC function
        * @param {string} qualifier - the queue string
@@ -397,7 +398,7 @@ const amqpconnector = conf => {
           }
           // eslint-disable-next-line no-underscore-dangle
           c._sendToQueue = (...args) => {
-            config.transport.log(
+            config.transport.debug(
               "invoke_send_message_to_rpc_queue",
               fnName,
               ...args
@@ -409,7 +410,7 @@ const amqpconnector = conf => {
             return c.consume(
               fn,
               (...cbargs) => {
-                config.transport.log(
+                config.transport.debug(
                   "invoke_rpc_message_returned",
                   fnName,
                   ...cbargs
@@ -424,13 +425,13 @@ const amqpconnector = conf => {
               return c
                 ? c
                     .assertQueue("", { exclusive: true, autoDelete: true })
-                    .then(queue => {
+                    .then((queue) => {
                       return (
                         c &&
                         c // eslint-disable-line no-underscore-dangle
                           ._consume(
                             queue.queue,
-                            async message => {
+                            async (message) => {
                               if (!message) {
                                 return rej(new Error("message_empty"));
                               }
@@ -441,7 +442,7 @@ const amqpconnector = conf => {
                                 ...message,
                                 content: chan.handleMessageContentOnReception(
                                   Buffer.from(stringify(data))
-                                )
+                                ),
                               };
                               if (
                                 m.properties.headers["x-correlation-id"] ===
@@ -482,9 +483,9 @@ const amqpconnector = conf => {
                                         ...((params.headers || {})[
                                           "x-transaction-stack"
                                         ] || []),
-                                        generateStackId()
-                                      ]
-                                    }
+                                        generateStackId(),
+                                      ],
+                                    },
                                   }
                                 )
                               : rej(new Error("no_channel_available"));
@@ -495,12 +496,12 @@ const amqpconnector = conf => {
             });
           })
             .then(resolve)
-            .catch(e => {
+            .catch((e) => {
               reject(e);
             })
             .finally(() => {
               return (
-                cTag && chan._channel && chan._channel.cancel(cTag, _ => _) // eslint-disable-line no-underscore-dangle
+                cTag && chan._channel && chan._channel.cancel(cTag, (_) => _) // eslint-disable-line no-underscore-dangle
               );
             });
         });
@@ -510,7 +511,7 @@ const amqpconnector = conf => {
     /**
      * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
      */
-    chan =>
+    (chan) =>
       /**
        * Invoke an RPC function
        * @param {string} qualifier - the queue string
@@ -528,7 +529,7 @@ const amqpconnector = conf => {
           // eslint-disable-next-line no-underscore-dangle
           if (cTag && chan._channel) {
             // eslint-disable-next-line no-underscore-dangle
-            chan._channel.cancel(cTag, _ => _);
+            chan._channel.cancel(cTag, (_) => _);
           }
         };
         if (params.timeout) {
@@ -543,7 +544,7 @@ const amqpconnector = conf => {
         }
         // eslint-disable-next-line no-underscore-dangle
         c._sendToQueue = (...args) => {
-          config.transport.log(
+          config.transport.debug(
             "invoke_send_message_to_rpc_queue",
             fnName,
             ...args
@@ -555,7 +556,7 @@ const amqpconnector = conf => {
           return c.consume(
             fn,
             (...cbargs) => {
-              config.transport.log(
+              config.transport.debug(
                 "invoke_rpc_message_returned",
                 fnName,
                 ...cbargs
@@ -565,82 +566,84 @@ const amqpconnector = conf => {
             cparams
           );
         };
-        c.assertQueue("", { exclusive: true, autoDelete: true }).then(queue => {
-          return (
-            c &&
-            c // eslint-disable-line no-underscore-dangle
-              ._consume(
-                queue.queue,
-                async message => {
-                  if (!message) {
-                    return;
-                  }
-                  const data = message.content.toString();
-                  const m = {
-                    ...message,
-                    content: chan.handleMessageContentOnReception(data)
-                  };
-                  if (
-                    m.properties.headers["x-correlation-id"] === correlationId
-                  ) {
+        c.assertQueue("", { exclusive: true, autoDelete: true }).then(
+          (queue) => {
+            return (
+              c &&
+              c // eslint-disable-line no-underscore-dangle
+                ._consume(
+                  queue.queue,
+                  async (message) => {
+                    if (!message) {
+                      return;
+                    }
+                    const data = message.content.toString();
+                    const m = {
+                      ...message,
+                      content: chan.handleMessageContentOnReception(data),
+                    };
                     if (
-                      m.properties.headers["x-stream-close"] ||
-                      m.properties.headers["x-error"]
+                      m.properties.headers["x-correlation-id"] === correlationId
                     ) {
-                      if (m.properties.headers["x-stream-close"]) {
-                        stream.emit("close");
+                      if (
+                        m.properties.headers["x-stream-close"] ||
+                        m.properties.headers["x-error"]
+                      ) {
+                        if (m.properties.headers["x-stream-close"]) {
+                          stream.emit("close");
+                        }
+                        if (m.properties.headers["x-stream-error"]) {
+                          stream.emit("error", m.content);
+                        }
+                        destroyConsumer();
                       }
-                      if (m.properties.headers["x-stream-error"]) {
-                        stream.emit("error", m.content);
+                      if (m.properties.headers["x-stream-end"]) {
+                        stream.emit("end");
                       }
-                      destroyConsumer();
+                      if (m.properties.headers["x-stream-chunk"]) {
+                        stream.emit("data", m.content);
+                      }
                     }
-                    if (m.properties.headers["x-stream-end"]) {
-                      stream.emit("end");
-                    }
-                    if (m.properties.headers["x-stream-chunk"]) {
-                      stream.emit("data", m.content);
-                    }
+                  },
+                  { noAck: true }
+                )
+                .then(({ consumerTag }) => {
+                  cTag = consumerTag;
+                  if (!c) {
+                    throw new Error("no_channel_available");
                   }
-                },
-                { noAck: true }
-              )
-              .then(({ consumerTag }) => {
-                cTag = consumerTag;
-                if (!c) {
-                  throw new Error("no_channel_available");
-                }
-                // eslint-disable-next-line no-underscore-dangle
-                return c._sendToQueue(
-                  fnName,
-                  chan.payloadToBufferForPublish(payload),
-                  {
-                    headers: {
-                      ...params.headers,
-                      "x-timestamp": +new Date(),
-                      "x-reply-to": queue.queue,
-                      "x-correlation-id": correlationId,
-                      "x-service":
-                        config.connection.clientProperties["service-name"],
-                      "x-service-version":
-                        config.connection.clientProperties["service-version"],
+                  // eslint-disable-next-line no-underscore-dangle
+                  return c._sendToQueue(
+                    fnName,
+                    chan.payloadToBufferForPublish(payload),
+                    {
+                      headers: {
+                        ...params.headers,
+                        "x-timestamp": +new Date(),
+                        "x-reply-to": queue.queue,
+                        "x-correlation-id": correlationId,
+                        "x-service":
+                          config.connection.clientProperties["service-name"],
+                        "x-service-version":
+                          config.connection.clientProperties["service-version"],
 
-                      "x-consumer": fnName,
-                      "x-transaction-stack": [
-                        ...((params.headers || {})["x-transaction-stack"] ||
-                          []),
-                        generateStackId()
-                      ]
+                        "x-consumer": fnName,
+                        "x-transaction-stack": [
+                          ...((params.headers || {})["x-transaction-stack"] ||
+                            []),
+                          generateStackId(),
+                        ],
+                      },
                     }
-                  }
-                );
-              })
-          );
-        });
+                  );
+                })
+            );
+          }
+        );
         return stream;
       };
 
-  const invoke = chan => (
+  const invoke = (chan) => (
     fnName,
     payload,
     params = { timeout: 5000, headers: {} }
@@ -655,7 +658,7 @@ const amqpconnector = conf => {
     /**
      * @param {object} chan - an amqplib channel object https://www.squaremobius.net/amqp.node/channel_api.html#channel
      */
-    chan =>
+    (chan) =>
       /**
      * @callback listenCallback
      * @param {object} message - an amqp message, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
@@ -678,13 +681,13 @@ const amqpconnector = conf => {
             : Joi.build(params.schema);
         }
 
-        return chan.addSetup(channel => {
+        return chan.addSetup((channel) => {
           // eslint-disable-next-line no-underscore-dangle
           const _consume = (fn, cb, cparams) => {
             return channel.consume(
               fn,
               (...cbargs) => {
-                config.transport.log(
+                config.transport.debug(
                   "listen_rpc_message_received",
                   fnName,
                   ...cbargs
@@ -695,17 +698,17 @@ const amqpconnector = conf => {
             );
           };
           return channel.assertQueue(fnName, params.queue).then(() => {
-            return _consume(fnName, message => {
+            return _consume(fnName, (message) => {
               let mess = {
                 ...message,
-                content: chan.handleMessageContentOnReception(message.content)
+                content: chan.handleMessageContentOnReception(message.content),
               };
               return Promise.resolve()
                 .then(() => {
                   if (schema) {
                     const { error, value } = schema.validate(mess);
                     if (error) {
-                      config.transport.log(
+                      config.transport.debug(
                         "listen_rpc_message_fails_validation",
                         fnName,
                         mess,
@@ -722,14 +725,14 @@ const amqpconnector = conf => {
                     ),
                     publishMessage: callWithContextHeaders(chan.publishMessage)(
                       message.properties.headers
-                    )
+                    ),
                   });
                 })
-                .then(data => {
+                .then((data) => {
                   chan.ack(message);
                   if (data instanceof Stream.Readable) {
                     return new Promise((resolve, reject) => {
-                      data.on("data", chunk => {
+                      data.on("data", (chunk) => {
                         // eslint-disable-next-line no-underscore-dangle
                         chan._sendToQueue(
                           message.properties.headers["x-reply-to"],
@@ -739,8 +742,8 @@ const amqpconnector = conf => {
                               ...message.properties.headers,
                               "x-timestamp": +new Date(),
                               "x-error": false,
-                              "x-stream-chunk": true
-                            }
+                              "x-stream-chunk": true,
+                            },
                           }
                         );
                       });
@@ -754,8 +757,8 @@ const amqpconnector = conf => {
                               ...message.properties.headers,
                               "x-timestamp": +new Date(),
                               "x-error": false,
-                              "x-stream-end": true
-                            }
+                              "x-stream-end": true,
+                            },
                           }
                         );
                       });
@@ -770,8 +773,8 @@ const amqpconnector = conf => {
                                 ...message.properties.headers,
                                 "x-timestamp": +new Date(),
                                 "x-error": false,
-                                "x-stream-close": true
-                              }
+                                "x-stream-close": true,
+                              },
                             }
                           )
                           .then(resolve);
@@ -787,12 +790,12 @@ const amqpconnector = conf => {
                       headers: {
                         ...message.properties.headers,
                         "x-timestamp": +new Date(),
-                        "x-error": false
-                      }
+                        "x-error": false,
+                      },
                     }
                   );
                 })
-                .catch(error => {
+                .catch((error) => {
                   chan.ack(message);
                   const erroro = R.pick(
                     ["message", "stack", ...Object.keys(error)].filter(Boolean),
@@ -806,8 +809,8 @@ const amqpconnector = conf => {
                       headers: {
                         ...message.properties.headers,
                         "x-timestamp": +new Date(),
-                        "x-error": true
-                      }
+                        "x-error": true,
+                      },
                     }
                   );
                 });
@@ -820,7 +823,7 @@ const amqpconnector = conf => {
     /**
      * @param {object} conn - an amqplib connection object https://www.squaremobius.net/amqp.node/channel_api.html#connect
      */
-    conn =>
+    (conn) =>
       /**
        * @param {object} params - the channel params object. Accepts also amqplib channel params https://www.squaremobius.net/amqp.node/channel_api.html#channel
        * @param {string} params.name - the channel name
@@ -833,7 +836,7 @@ const amqpconnector = conf => {
        * @param {string} params.realm - The realm of the channel
        * @return {object} An ChannelWrapper object
        */
-      p => {
+      (p) => {
         const params = { name: "default", rejectTimeout: 0, ...p };
         if (params.name in ctx.channels) {
           throw new Error("channel_already_exists");
@@ -842,28 +845,31 @@ const amqpconnector = conf => {
         chan.rejectTimeout = params.rejectTimeout;
         chan.realm = params.realm;
         chan.json = !!p.json;
-        chan.addSetup(channel => {
+        chan.addSetup((channel) => {
           return Number.isInteger(params.prefetchCount)
             ? channel.prefetch(params.prefetchCount, !!params.prefetchGlobal)
             : Promise.resolve();
         });
-        chan.handleMessageContentForPublish = m => m;
+        chan.handleMessageContentForPublish = (m) => m;
 
-        chan.payloadToBufferForPublish = o =>
+        chan.payloadToBufferForPublish = (o) =>
           !Buffer.isBuffer(o) ? Buffer.from(JSON.stringify(o)) : o;
 
-        chan.handleMessageContentOnReception = m =>
+        chan.handleMessageContentOnReception = (m) =>
           chan.json ? JSON.parse(Buffer.from(m)) : m;
 
         ctx.channels[params.name] = chan;
         // eslint-disable-next-line no-underscore-dangle
         chan._publish = (...args) => {
-          config.transport.log("publish_publish_message", ...args);
+          config.transport.debug("publish_publish_message", ...args);
           return chan.publish(...args);
         };
         // eslint-disable-next-line no-underscore-dangle
         chan._sendToQueue = (...args) => {
-          config.transport.log("send_to_queue_send_message_to_queue", ...args);
+          config.transport.debug(
+            "send_to_queue_send_message_to_queue",
+            ...args
+          );
           return chan.sendToQueue(...args);
         };
         chan.publishMessage = publishMessage(chan);
@@ -877,7 +883,7 @@ const amqpconnector = conf => {
     /**
      * @param {object} conn - an amqplib connection object https://www.squaremobius.net/amqp.node/channel_api.html#connect
      */
-    conn =>
+    (conn) =>
       /**
        * @param {object} params - the channel params object. Accepts also amqplib channel params https://www.squaremobius.net/amqp.node/channel_api.html#channel
        * @param {string} params.name - the channel name
@@ -890,7 +896,7 @@ const amqpconnector = conf => {
        * @param {string} params.realm - The realm of the channel
        * @return {object} An ChannelWrapper object
        */
-      params => {
+      (params) => {
         const name = params.name || "default";
         return name in ctx.channels
           ? ctx.channels[name]
@@ -901,7 +907,7 @@ const amqpconnector = conf => {
     connect: () => {
       if (!ctx.connection) {
         ctx.connection = amqp.connect(
-          config.urls.map(uo => ({ ...uo, url: uo.url.href })),
+          config.urls.map((uo) => ({ ...uo, url: uo.url.href })),
           config.connection
         );
         ctx.connection.buildChannel = buildChannel(ctx.connection);
@@ -910,7 +916,7 @@ const amqpconnector = conf => {
         );
       }
       return ctx.connection;
-    }
+    },
   };
 };
 

@@ -18,7 +18,7 @@ An middle level [amqp.node](https://github.com/squaremo/amqp.node) wrapper for e
 - Joi message structure validation on message reception (`listen`, `subscribeToMessage`)
 - Provide your own transport to log every microservice message
 - Automatic retry with dead-letter
-- Stream over amqp
+- Stream over amqp (alpha)
 
 ## Install
 
@@ -487,7 +487,7 @@ channel.subscribeToMessages(
 );
 ```
 
-### Stream over AMQP
+### Stream over AMQP (alpha)
 
 - channels must be raw
 

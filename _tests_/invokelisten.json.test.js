@@ -8,17 +8,17 @@ const cTags = [];
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const publishChannel = amqpconnection.buildChannelIfNotExists({
   name: "publishChannel",
-  json: true
+  json: true,
 });
 
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
-  json: true
+  json: true,
 });
 
 beforeAll(async () => {
@@ -26,16 +26,17 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await subscribeChannel.addSetup(channel => {
+  await subscribeChannel.addSetup((channel) => {
     return Promise.resolve()
       .then(() => {
-        return Promise.all(cTags.map(t => channel.cancel(t)));
+        return Promise.all(cTags.map((t) => channel.cancel(t)));
       })
       .then(() => channel.deleteQueue("my-rpc-function-1"));
   });
-  return Promise.all([publishChannel.close(), publishChannel.close()]).then(
-    () => Promise.all([amqpconnection.close()])
-  );
+  return Promise.all([
+    publishChannel.close(),
+    publishChannel.close(),
+  ]).then(() => Promise.all([amqpconnection.close()]));
 });
 
 test("invoke subscribe RPC function", async () => {
@@ -46,10 +47,12 @@ test("invoke subscribe RPC function", async () => {
     }
   );
   cTags.push(consumerTag);
-  const result = await new Promise(resolve => {
-    publishChannel.invoke("my-rpc-function-1", { value: 45 }).then(response => {
-      resolve(response.content.value);
-    });
+  const result = await new Promise((resolve) => {
+    publishChannel
+      .invoke("my-rpc-function-1", { value: 45 })
+      .then((response) => {
+        resolve(response.content.value);
+      });
   });
   expect(result).toBe(450);
 });

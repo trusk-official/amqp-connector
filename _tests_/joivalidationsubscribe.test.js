@@ -8,17 +8,17 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const publishChannel = amqpconnection.buildChannelIfNotExists({
   name: "publishChannel",
-  json: true
+  json: true,
 });
 
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
-  json: true
+  json: true,
 });
 
 beforeAll(async () => {
@@ -26,7 +26,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await publishChannel.addSetup(channel => {
+  await publishChannel.addSetup((channel) => {
     return Promise.all([
       channel.deleteExchange("my-direct-validated-exchange-1"),
       channel.deleteExchange("my-direct-validated-exchange-2"),
@@ -35,13 +35,14 @@ afterAll(async () => {
       channel.deleteQueue("my-validated-queue-1"),
       channel.deleteQueue("my-validated-queue-2"),
       channel.deleteQueue("my-validated-queue-3"),
-      channel.deleteQueue("my-validated-queue-4")
+      channel.deleteQueue("my-validated-queue-4"),
     ]);
   });
 
-  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
-    () => amqpconnection.close()
-  );
+  return Promise.all([
+    publishChannel.close(),
+    subscribeChannel.close(),
+  ]).then(() => amqpconnection.close());
 });
 
 test("message format validation on subscribe (1)", async () => {
@@ -59,10 +60,10 @@ test("message format validation on subscribe (1)", async () => {
             content: Joi.object(),
             properties: Joi.object({
               headers: Joi.object({
-                "x-service-version": Joi.string().valid("1.2.3")
-              }).unknown()
-            }).unknown()
-          }).unknown()
+                "x-service-version": Joi.string().valid("1.2.3"),
+              }).unknown(),
+            }).unknown(),
+          }).unknown(),
         }
       ),
       subscribeChannel.subscribeToMessages(
@@ -75,27 +76,27 @@ test("message format validation on subscribe (1)", async () => {
             content: Joi.object(),
             properties: Joi.object({
               headers: Joi.object({
-                "x-service-version": Joi.string().valid("4.5.6")
-              }).unknown()
-            }).unknown()
-          }).unknown()
+                "x-service-version": Joi.string().valid("4.5.6"),
+              }).unknown(),
+            }).unknown(),
+          }).unknown(),
         }
-      )
+      ),
     ])
       .then(() => {
         return Promise.all([
           publishChannel.publishMessage(
             "direct/my-direct-validated-exchange-1/my.routing.key",
             {
-              foo: "bar"
+              foo: "bar",
             }
           ),
           publishChannel.publishMessage(
             "direct/my-direct-validated-exchange-2/my.routing.key",
             {
-              foo: "biz"
+              foo: "biz",
             }
-          )
+          ),
         ]);
       })
       .catch(reject);

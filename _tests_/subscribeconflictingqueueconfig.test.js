@@ -6,12 +6,12 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
-  json: true
+  json: true,
 });
 
 beforeAll(async () => {
@@ -22,28 +22,31 @@ afterAll(async () => {
   const amqpconnectioncleanup = amqpconnector({
     urls: ["amqp://localhost:5672"],
     serviceName: "my_service",
-    serviceVersion: "1.2.3"
+    serviceVersion: "1.2.3",
   }).connect();
   let channelcleanup = null;
-  await new Promise(resolve => {
+  await new Promise((resolve) => {
     amqpconnectioncleanup.on("connect", async () => {
       channelcleanup = amqpconnectioncleanup.buildChannelIfNotExists({
         name: "cleanupChannel",
-        json: true
+        json: true,
       });
       channelcleanup.waitForConnect().then(resolve);
     });
   }).then(() => {
-    return channelcleanup.addSetup(channel => {
+    return channelcleanup.addSetup((channel) => {
       return Promise.all([
         channel.deleteExchange("my-conflicting-exchange-2"),
-        channel.deleteQueue("my-conflicting-queue-2")
+        channel.deleteQueue("my-conflicting-queue-2"),
       ]);
     });
   });
 
-  return Promise.all([subscribeChannel.close(), channelcleanup.close()]).then(
-    () => Promise.all([amqpconnection.close(), amqpconnectioncleanup.close()])
+  return Promise.all([
+    subscribeChannel.close(),
+    channelcleanup.close(),
+  ]).then(() =>
+    Promise.all([amqpconnection.close(), amqpconnectioncleanup.close()])
   );
 });
 
@@ -55,8 +58,8 @@ test("subscribe conflicting exchange config", async () => {
       async () => {},
       {
         queue: {
-          exclusive: true
-        }
+          exclusive: true,
+        },
       }
     )
     .then(() => {
@@ -66,8 +69,8 @@ test("subscribe conflicting exchange config", async () => {
           async () => {},
           {
             queue: {
-              exclusive: false
-            }
+              exclusive: false,
+            },
           }
         )
         .catch(() => {
