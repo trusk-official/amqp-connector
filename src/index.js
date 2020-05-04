@@ -36,7 +36,8 @@ const amqpconnector = conf => {
       info: () => {},
       error: () => {},
       warn: () => {},
-      silly: () => {}
+      silly: () => {},
+      debug: () => {}
     },
     ...conf
   };
@@ -179,14 +180,14 @@ const amqpconnector = conf => {
 
         // eslint-disable-next-line no-underscore-dangle
         const _cb = async (...args) => {
-          config.transport.log(
+          config.transport.debug(
             "subscribe_message_received",
             qualifier,
             args[0].message
           );
           return cb(...args)
             .then(o => {
-              config.transport.log(
+              config.transport.debug(
                 "subscribe_message_handled",
                 qualifier,
                 args[0].message,
@@ -195,7 +196,7 @@ const amqpconnector = conf => {
               return o;
             })
             .catch(e => {
-              config.transport.log(
+              config.transport.debug(
                 "subscribe_message_rejected",
                 qualifier,
                 args[0].message,
@@ -278,7 +279,7 @@ const amqpconnector = conf => {
                       if (schema) {
                         const { error, value } = schema.validate(mess);
                         if (error) {
-                          config.transport.log(
+                          config.transport.debug(
                             "subscribe_message_fails_validation",
                             qualifier,
                             mess,
@@ -328,7 +329,7 @@ const amqpconnector = conf => {
                       maxTries &&
                       deathCounts >= maxTries - 1
                     ) {
-                      config.transport.log(
+                      config.transport.debug(
                         "message_nack_stop_retrying",
                         qualifier,
                         message,
@@ -343,7 +344,7 @@ const amqpconnector = conf => {
                             headers: message.properties.headers
                           }
                         );
-                        config.transport.log(
+                        config.transport.debug(
                           "message_ack_sent_to_dump_queue",
                           qualifier,
                           message,
@@ -352,7 +353,7 @@ const amqpconnector = conf => {
                       }
                     } else {
                       setTimeout(() => {
-                        config.transport.log(
+                        config.transport.debug(
                           "message_nack",
                           qualifier,
                           message,
@@ -397,7 +398,7 @@ const amqpconnector = conf => {
           }
           // eslint-disable-next-line no-underscore-dangle
           c._sendToQueue = (...args) => {
-            config.transport.log(
+            config.transport.debug(
               "invoke_send_message_to_rpc_queue",
               fnName,
               ...args
@@ -409,7 +410,7 @@ const amqpconnector = conf => {
             return c.consume(
               fn,
               (...cbargs) => {
-                config.transport.log(
+                config.transport.debug(
                   "invoke_rpc_message_returned",
                   fnName,
                   ...cbargs
@@ -543,7 +544,7 @@ const amqpconnector = conf => {
         }
         // eslint-disable-next-line no-underscore-dangle
         c._sendToQueue = (...args) => {
-          config.transport.log(
+          config.transport.debug(
             "invoke_send_message_to_rpc_queue",
             fnName,
             ...args
@@ -555,7 +556,7 @@ const amqpconnector = conf => {
           return c.consume(
             fn,
             (...cbargs) => {
-              config.transport.log(
+              config.transport.debug(
                 "invoke_rpc_message_returned",
                 fnName,
                 ...cbargs
@@ -684,7 +685,7 @@ const amqpconnector = conf => {
             return channel.consume(
               fn,
               (...cbargs) => {
-                config.transport.log(
+                config.transport.debug(
                   "listen_rpc_message_received",
                   fnName,
                   ...cbargs
@@ -705,7 +706,7 @@ const amqpconnector = conf => {
                   if (schema) {
                     const { error, value } = schema.validate(mess);
                     if (error) {
-                      config.transport.log(
+                      config.transport.debug(
                         "listen_rpc_message_fails_validation",
                         fnName,
                         mess,
@@ -858,12 +859,15 @@ const amqpconnector = conf => {
         ctx.channels[params.name] = chan;
         // eslint-disable-next-line no-underscore-dangle
         chan._publish = (...args) => {
-          config.transport.log("publish_publish_message", ...args);
+          config.transport.debug("publish_publish_message", ...args);
           return chan.publish(...args);
         };
         // eslint-disable-next-line no-underscore-dangle
         chan._sendToQueue = (...args) => {
-          config.transport.log("send_to_queue_send_message_to_queue", ...args);
+          config.transport.debug(
+            "send_to_queue_send_message_to_queue",
+            ...args
+          );
           return chan.sendToQueue(...args);
         };
         chan.publishMessage = publishMessage(chan);
