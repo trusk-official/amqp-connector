@@ -2,8 +2,8 @@ const {
   EXCHANGE_TYPE,
   EXCHANGES_AVAILABLE,
   DEFAULT_EXCHANGE,
-  INVOKE_TYPE
-} = require("../src/constants");
+  INVOKE_TYPE,
+} = require("./constants");
 
 /**
  * A function parses an amqp subscribe qualifier string
@@ -35,7 +35,7 @@ const subscribeQualifierParser = (qualifier, params = { realm: null }) => {
     routingKey: `${params.realm || ""}${
       routingKey === undefined ? "" : routingKey
     }`,
-    queue: `${params.realm || ""}${queue || ""}`
+    queue: `${params.realm || ""}${queue || ""}`,
   };
 };
 
@@ -71,7 +71,7 @@ const publishQualifierParser = (qualifier, params = { realm: null }) => {
     routingKey: `${params.realm || ""}${
       routingKey === undefined ? "" : routingKey
     }`,
-    queue: `${params.realm || ""}${queue || ""}`
+    queue: `${params.realm || ""}${queue || ""}`,
   };
 };
 
@@ -86,7 +86,9 @@ const invokeQualifier = (qualifier, params = { realm: null }) => {
   const matchresult = qualifier.match(`^${INVOKE_TYPE.STREAM}/(.+)`);
   return {
     type: `${matchresult ? INVOKE_TYPE.STREAM : INVOKE_TYPE.RPC}`,
-    function: `${params.realm || ""}${matchresult ? matchresult[1] : qualifier}`
+    function: `${params.realm || ""}${
+      matchresult ? matchresult[1] : qualifier
+    }`,
   };
 };
 
@@ -108,7 +110,7 @@ const promiseTimeout = (ms, promisef) => {
     promisef().finally(() => {
       clearTimeout(id);
     }),
-    timeout
+    timeout,
   ]);
 };
 
@@ -121,7 +123,7 @@ const generateStackId = (size = 5) => {
   const CHARS =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   return Array.from(Array(size)).reduce(
-    acc => acc + CHARS.charAt(Math.floor(Math.random() * CHARS.length)),
+    (acc) => acc + CHARS.charAt(Math.floor(Math.random() * CHARS.length)),
     ""
   );
 };
@@ -131,5 +133,5 @@ module.exports = {
   publishQualifierParser,
   invokeQualifier,
   promiseTimeout,
-  generateStackId
+  generateStackId,
 };

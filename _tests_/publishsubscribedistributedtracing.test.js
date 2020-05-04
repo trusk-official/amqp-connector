@@ -6,62 +6,62 @@ const amqpconnector = require("../src/index");
 const amqpconnection1 = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service_1",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const amqpconnection2 = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service_2",
-  serviceVersion: "4.5.6"
+  serviceVersion: "4.5.6",
 }).connect();
 
 const publishChannel1 = amqpconnection1.buildChannelIfNotExists({
   name: "publishChannel1",
-  json: true
+  json: true,
 });
 
 const subscribeChannel1 = amqpconnection1.buildChannelIfNotExists({
   name: "subscribeChannel1",
-  json: true
+  json: true,
 });
 
 const publishChannel2 = amqpconnection2.buildChannelIfNotExists({
   name: "publishChannel2",
-  json: true
+  json: true,
 });
 
 const subscribeChannel2 = amqpconnection2.buildChannelIfNotExists({
   name: "subscribeChannel2",
-  json: true
+  json: true,
 });
 
 beforeAll(async () => {
   return Promise.all([
     subscribeChannel1.waitForConnect(),
-    subscribeChannel2.waitForConnect()
+    subscribeChannel2.waitForConnect(),
   ]);
 });
 
 afterAll(async () => {
   await Promise.all([
-    publishChannel1.addSetup(channel => {
+    publishChannel1.addSetup((channel) => {
       return Promise.all([
         channel.deleteExchange("my-direct-traced-exchange-1"),
         channel.deleteExchange("my-direct-traced-exchange-2"),
         channel.deleteQueue("my-traced-queue-1"),
-        channel.deleteQueue("my-traced-queue-2")
+        channel.deleteQueue("my-traced-queue-2"),
       ]);
     }),
-    subscribeChannel2.addSetup(channel => {
+    subscribeChannel2.addSetup((channel) => {
       return Promise.all([channel.deleteQueue("my-traced-rpc-function-5")]);
-    })
+    }),
   ]);
 
   return Promise.all([
     publishChannel1.close(),
     subscribeChannel1.close(),
     publishChannel2.close(),
-    subscribeChannel2.close()
+    subscribeChannel2.close(),
   ]).then(() =>
     Promise.all([amqpconnection1.close(), amqpconnection2.close()])
   );
@@ -78,7 +78,7 @@ test("publish subscribe RPC function traced", async () => {
         await publishMessage(
           "direct/my-direct-traced-exchange-2/my.routing.key",
           {
-            value: 3 * message.content.value
+            value: 3 * message.content.value,
           }
         );
         return "ok";
@@ -98,16 +98,16 @@ test("publish subscribe RPC function traced", async () => {
         async ({ message, invoke }) => {
           headerStack.push(message.properties.headers);
           await invoke("my-traced-rpc-function-5", {
-            value: 2 * message.content.value
+            value: 2 * message.content.value,
           });
         }
-      )
+      ),
     ])
       .then(() => {
         return publishChannel1.publishMessage(
           "direct/my-direct-traced-exchange-1/my.routing.key",
           {
-            value: 42
+            value: 42,
           }
         );
       })

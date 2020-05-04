@@ -7,17 +7,17 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const publishChannel = amqpconnection.buildChannelIfNotExists({
   name: "publishChannel",
-  json: true
+  json: true,
 });
 
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
-  json: true
+  json: true,
 });
 
 beforeAll(async () => {
@@ -25,7 +25,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await publishChannel.addSetup(channel => {
+  await publishChannel.addSetup((channel) => {
     return Promise.all([
       channel.deleteExchange("my-direct-text-validated-exchange-1"),
       channel.deleteExchange("my-direct-text-validated-exchange-2"),
@@ -34,13 +34,14 @@ afterAll(async () => {
       channel.deleteQueue("my-text-validated-queue-1"),
       channel.deleteQueue("my-text-validated-queue-2"),
       channel.deleteQueue("my-text-validated-queue-3"),
-      channel.deleteQueue("my-text-validated-queue-4")
+      channel.deleteQueue("my-text-validated-queue-4"),
     ]);
   });
 
-  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
-    () => amqpconnection.close()
-  );
+  return Promise.all([
+    publishChannel.close(),
+    subscribeChannel.close(),
+  ]).then(() => amqpconnection.close());
 });
 
 test("message format text validation on subscribe (1)", async () => {
@@ -57,37 +58,37 @@ test("message format text validation on subscribe (1)", async () => {
           schema: {
             type: "object",
             flags: {
-              unknown: true
+              unknown: true,
             },
             keys: {
               content: {
-                type: "object"
+                type: "object",
               },
               properties: {
                 type: "object",
                 flags: {
-                  unknown: true
+                  unknown: true,
                 },
                 keys: {
                   headers: {
                     type: "object",
                     flags: {
-                      unknown: true
+                      unknown: true,
                     },
                     keys: {
                       "x-service-version": {
                         type: "string",
                         flags: {
-                          only: true
+                          only: true,
                         },
-                        allow: ["1.2.3"]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+                        allow: ["1.2.3"],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         }
       ),
       subscribeChannel.subscribeToMessages(
@@ -99,54 +100,54 @@ test("message format text validation on subscribe (1)", async () => {
           schema: {
             type: "object",
             flags: {
-              unknown: true
+              unknown: true,
             },
             keys: {
               content: {
-                type: "object"
+                type: "object",
               },
               properties: {
                 type: "object",
                 flags: {
-                  unknown: true
+                  unknown: true,
                 },
                 keys: {
                   headers: {
                     type: "object",
                     flags: {
-                      unknown: true
+                      unknown: true,
                     },
                     keys: {
                       "x-service-version": {
                         type: "string",
                         flags: {
-                          only: true
+                          only: true,
                         },
-                        allow: ["4.5.6"]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+                        allow: ["4.5.6"],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         }
-      )
+      ),
     ])
       .then(() => {
         return Promise.all([
           publishChannel.publishMessage(
             "direct/my-direct-text-validated-exchange-1/my.routing.key",
             {
-              foo: "bar"
+              foo: "bar",
             }
           ),
           publishChannel.publishMessage(
             "direct/my-direct-text-validated-exchange-2/my.routing.key",
             {
-              foo: "biz"
+              foo: "biz",
             }
-          )
+          ),
         ]);
       })
       .catch(reject);

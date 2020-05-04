@@ -5,11 +5,11 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 beforeAll(async () => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     amqpconnection.on("connect", async () => {
       resolve();
     });
@@ -32,7 +32,7 @@ afterAll(async () => {
 test("creates an unnamed channel properly", async () => {
   channeldefault = amqpconnection.buildChannelIfNotExists({
     json: true,
-    prefetchCount: 0
+    prefetchCount: 0,
   });
   expect(channeldefault.constructor.name).toBe("ChannelWrapper");
   expect(channeldefault.name).toBe("default");
@@ -44,7 +44,7 @@ test("creates an unnamed channel properly", async () => {
 test("retrieves a named channel properly", async () => {
   channeldefault = amqpconnection.buildChannelIfNotExists({
     json: true,
-    prefetchCount: 0
+    prefetchCount: 0,
   });
   expect(channeldefault.constructor.name).toBe("ChannelWrapper");
   expect(channeldefault.name).toBe("default");
@@ -54,7 +54,7 @@ test("creates a named channel properly", async () => {
   channel1 = amqpconnection.buildChannelIfNotExists({
     name: "channel1",
     json: true,
-    prefetchCount: 0
+    prefetchCount: 0,
   });
   expect(channel1.constructor.name).toBe("ChannelWrapper");
   expect(channel1.name).toBe("channel1");
@@ -67,7 +67,7 @@ test("retrieves a named channel properly", async () => {
   const channel = amqpconnection.buildChannelIfNotExists({
     name: "channel1",
     json: true,
-    prefetchCount: 0
+    prefetchCount: 0,
   });
   expect(channel).toStrictEqual(channel1);
 });
@@ -75,7 +75,7 @@ test("retrieves a named channel properly", async () => {
 test("try to recreate a channel with different properties", async () => {
   const channel = amqpconnection.buildChannelIfNotExists({
     name: "channel1",
-    json: false
+    json: false,
   });
   expect(channel.constructor.name).toBe("ChannelWrapper");
   expect(channel.name).toBe("channel1");
@@ -89,7 +89,7 @@ test("fails to create a channel twice", async () => {
     amqpconnection.buildChannel({
       name: "channel1",
       json: true,
-      prefetchCount: 0
+      prefetchCount: 0,
     });
   } catch (e) {
     expect(e.message).toBe("channel_already_exists");
