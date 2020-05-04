@@ -6,14 +6,14 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const publishChannel = amqpconnection.buildChannelIfNotExists({
-  name: "publishChannel"
+  name: "publishChannel",
 });
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
-  name: "subscribeChannel"
+  name: "subscribeChannel",
 });
 
 beforeAll(async () => {
@@ -21,18 +21,19 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await publishChannel.addSetup(channel => {
+  await publishChannel.addSetup((channel) => {
     return Promise.all([
       channel.deleteExchange("any-exchange-3"),
       channel.deleteExchange("any-exchange-4"),
       channel.deleteQueue("my-q-queue-3"),
-      channel.deleteQueue("my-q-queue-4")
+      channel.deleteQueue("my-q-queue-4"),
     ]);
   });
 
-  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
-    () => amqpconnection.close()
-  );
+  return Promise.all([
+    publishChannel.close(),
+    subscribeChannel.close(),
+  ]).then(() => amqpconnection.close());
 });
 
 test("publish subscribe q Buffer on raw channel", async () => {
@@ -54,7 +55,7 @@ test("publish subscribe q Buffer on raw channel", async () => {
             "q/my-q-queue-3",
             Buffer.from(
               JSON.stringify({
-                value: "my.routing.key"
+                value: "my.routing.key",
               })
             )
           ),
@@ -62,7 +63,7 @@ test("publish subscribe q Buffer on raw channel", async () => {
             "q/my-q-queue-3",
             Buffer.from(
               JSON.stringify({
-                value: "my.stuff.thing"
+                value: "my.stuff.thing",
               })
             )
           ),
@@ -70,7 +71,7 @@ test("publish subscribe q Buffer on raw channel", async () => {
             "q/my-q-queue-3",
             Buffer.from(
               JSON.stringify({
-                value: "my.thing"
+                value: "my.thing",
               })
             )
           ),
@@ -78,7 +79,7 @@ test("publish subscribe q Buffer on raw channel", async () => {
             "q/my-q-queue-3",
             Buffer.from(
               JSON.stringify({
-                value: "your.stuff.thing"
+                value: "your.stuff.thing",
               })
             )
           ),
@@ -86,15 +87,15 @@ test("publish subscribe q Buffer on raw channel", async () => {
             "q/my-q-queue-3",
             Buffer.from(
               JSON.stringify({
-                value: "your.stuff"
+                value: "your.stuff",
               })
             )
-          )
+          ),
         ]);
       })
       .catch(reject);
   });
-  const values = result.map(m => JSON.parse(Buffer.from(m.content)).value);
+  const values = result.map((m) => JSON.parse(Buffer.from(m.content)).value);
   expect(values.length).toBe(5);
   expect(values.includes("my.routing.key")).toBe(true);
   expect(values.includes("my.stuff.thing")).toBe(true);
@@ -110,7 +111,7 @@ test("publish subscribe q Buffer on raw channel", async () => {
 });
 
 test("publish subscribe q raw on raw channel", async () => {
-  const result = await new Promise(resolve => {
+  const result = await new Promise((resolve) => {
     const messagesReceived = [];
     setTimeout(() => {
       resolve(messagesReceived);
@@ -125,23 +126,23 @@ test("publish subscribe q raw on raw channel", async () => {
       .then(() => {
         return Promise.all([
           publishChannel.publishMessage("q/my-q-queue-4", {
-            value: "my.routing.key"
+            value: "my.routing.key",
           }),
           publishChannel.publishMessage("q/my-q-queue-4", {
-            value: "my.stuff.thing"
+            value: "my.stuff.thing",
           }),
           publishChannel.publishMessage("q/my-q-queue-4", {
-            value: "my.thing"
+            value: "my.thing",
           }),
           publishChannel.publishMessage("q/my-q-queue-4", {
-            value: "your.stuff.thing"
+            value: "your.stuff.thing",
           }),
           publishChannel.publishMessage("q/my-q-queue-4", {
-            value: "your.stuff"
-          })
+            value: "your.stuff",
+          }),
         ]);
       })
-      .catch(e => {
+      .catch((e) => {
         messagesReceived.push(e);
       });
   });

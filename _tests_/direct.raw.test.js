@@ -7,15 +7,15 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const publishChannel = amqpconnection.buildChannelIfNotExists({
-  name: "publishChannel"
+  name: "publishChannel",
 });
 
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
-  name: "subscribeChannel"
+  name: "subscribeChannel",
 });
 
 beforeAll(async () => {
@@ -23,18 +23,19 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await publishChannel.addSetup(channel => {
+  await publishChannel.addSetup((channel) => {
     return Promise.all([
       channel.deleteExchange("my-direct-exchange-3"),
       channel.deleteExchange("my-direct-exchange-4"),
       channel.deleteQueue("my-queue-3"),
-      channel.deleteQueue("my-queue-4")
+      channel.deleteQueue("my-queue-4"),
     ]);
   });
 
-  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
-    () => amqpconnection.close()
-  );
+  return Promise.all([
+    publishChannel.close(),
+    subscribeChannel.close(),
+  ]).then(() => amqpconnection.close());
 });
 
 test("publish subscribe direct buffer on raw channel", async () => {
@@ -54,7 +55,7 @@ test("publish subscribe direct buffer on raw channel", async () => {
             "direct/my-direct-exchange-3/my.routing.key",
             Buffer.from(
               JSON.stringify({
-                foo: "bar"
+                foo: "bar",
               })
             )
           ),
@@ -62,27 +63,27 @@ test("publish subscribe direct buffer on raw channel", async () => {
             "direct/my-direct-exchange-3/my.routing.stuff",
             Buffer.from(
               JSON.stringify({
-                foo: "biz"
+                foo: "biz",
               })
             )
-          )
+          ),
         ]);
       })
       .catch(reject);
   });
   expect(result.length).toBe(1);
   expect(JSON.parse(Buffer.from(result[0].content))).toStrictEqual({
-    foo: "bar"
+    foo: "bar",
   });
   expect(R.pick(["exchange", "routingKey"], result[0].fields)).toStrictEqual({
     exchange: "my-direct-exchange-3",
-    routingKey: "my.routing.key"
+    routingKey: "my.routing.key",
   });
   expect(
     R.pick(["contentType", "deliveryMode"], result[0].properties)
   ).toStrictEqual({
     contentType: undefined,
-    deliveryMode: 2
+    deliveryMode: 2,
   });
   expect(result[0].properties.headers["x-timestamp"]).toBeGreaterThanOrEqual(
     +new Date() - 1000
@@ -93,7 +94,7 @@ test("publish subscribe direct buffer on raw channel", async () => {
 });
 
 test("publish subscribe direct json on raw channel", async () => {
-  const result = await new Promise(resolve => {
+  const result = await new Promise((resolve) => {
     const messagesReceived = [];
     subscribeChannel
       .subscribeToMessages(
@@ -109,7 +110,7 @@ test("publish subscribe direct json on raw channel", async () => {
           { foo: "bar" }
         );
       })
-      .catch(e => {
+      .catch((e) => {
         messagesReceived.push(e);
         resolve(messagesReceived);
       });

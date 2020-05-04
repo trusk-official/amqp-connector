@@ -9,7 +9,7 @@ test("subscribe parse qualifier direct 1", () => {
     type: EXCHANGE_TYPE.DIRECT,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.DIRECT],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -18,7 +18,7 @@ test("subscribe parse qualifier direct 2", () => {
     type: EXCHANGE_TYPE.DIRECT,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.DIRECT],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -27,7 +27,7 @@ test("subscribe parse qualifier direct 3", () => {
     type: EXCHANGE_TYPE.DIRECT,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -36,7 +36,7 @@ test("subscribe parse qualifier direct 4", () => {
     type: EXCHANGE_TYPE.DIRECT,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -45,7 +45,7 @@ test("subscribe parse qualifier direct 5", () => {
     type: EXCHANGE_TYPE.DIRECT,
     exchange: "exchange",
     queue: "",
-    routingKey: "routingkey"
+    routingKey: "routingkey",
   });
 });
 
@@ -54,7 +54,7 @@ test("subscribe parse qualifier direct 6", () => {
     type: EXCHANGE_TYPE.DIRECT,
     exchange: "exchange",
     queue: "",
-    routingKey: "routingkey"
+    routingKey: "routingkey",
   });
 });
 
@@ -65,7 +65,7 @@ test("subscribe parse qualifier direct 6", () => {
     type: EXCHANGE_TYPE.DIRECT,
     exchange: "exchange",
     queue: "",
-    routingKey: "routingkey"
+    routingKey: "routingkey",
   });
 });
 
@@ -74,7 +74,7 @@ test("subscribe parse qualifier topic 1", () => {
     type: EXCHANGE_TYPE.TOPIC,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.TOPIC],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -83,7 +83,7 @@ test("subscribe parse qualifier topic 2", () => {
     type: EXCHANGE_TYPE.TOPIC,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.TOPIC],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -92,7 +92,7 @@ test("subscribe parse qualifier topic 3", () => {
     type: EXCHANGE_TYPE.TOPIC,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -101,7 +101,7 @@ test("subscribe parse qualifier topic 4", () => {
     type: EXCHANGE_TYPE.TOPIC,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -110,7 +110,7 @@ test("subscribe parse qualifier topic 5", () => {
     type: EXCHANGE_TYPE.TOPIC,
     exchange: "exchange",
     queue: "",
-    routingKey: "routingkey"
+    routingKey: "routingkey",
   });
 });
 
@@ -119,7 +119,7 @@ test("subscribe parse qualifier topic 6", () => {
     type: EXCHANGE_TYPE.TOPIC,
     exchange: "exchange",
     queue: "",
-    routingKey: "routingkey"
+    routingKey: "routingkey",
   });
 });
 
@@ -130,7 +130,7 @@ test("subscribe parse qualifier topic 7", () => {
     type: EXCHANGE_TYPE.TOPIC,
     exchange: "exchange",
     queue: "",
-    routingKey: "routingkey"
+    routingKey: "routingkey",
   });
 });
 
@@ -139,7 +139,7 @@ test("subscribe parse qualifier fanout 1", () => {
     type: EXCHANGE_TYPE.FANOUT,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.FANOUT],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -148,7 +148,7 @@ test("subscribe parse qualifier fanout 2", () => {
     type: EXCHANGE_TYPE.FANOUT,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.FANOUT],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -157,7 +157,7 @@ test("subscribe parse qualifier fanout 3", () => {
     type: EXCHANGE_TYPE.FANOUT,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -166,7 +166,7 @@ test("subscribe parse qualifier fanout 4", () => {
     type: EXCHANGE_TYPE.FANOUT,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -175,7 +175,7 @@ test("subscribe parse qualifier fanout 5", () => {
     type: EXCHANGE_TYPE.FANOUT,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -184,7 +184,7 @@ test("subscribe parse qualifier fanout 6", () => {
     type: EXCHANGE_TYPE.FANOUT,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -195,7 +195,7 @@ test("subscribe parse qualifier fanout 7", () => {
     type: EXCHANGE_TYPE.FANOUT,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -204,7 +204,7 @@ test("subscribe parse qualifier headers 1", () => {
     type: EXCHANGE_TYPE.HEADERS,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.HEADERS],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -213,7 +213,7 @@ test("subscribe parse qualifier headers 2", () => {
     type: EXCHANGE_TYPE.HEADERS,
     exchange: DEFAULT_EXCHANGE[EXCHANGE_TYPE.HEADERS],
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -222,7 +222,7 @@ test("subscribe parse qualifier headers 3", () => {
     type: EXCHANGE_TYPE.HEADERS,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -231,7 +231,7 @@ test("subscribe parse qualifier headers 4", () => {
     type: EXCHANGE_TYPE.HEADERS,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -240,7 +240,7 @@ test("subscribe parse qualifier headers 5", () => {
     type: EXCHANGE_TYPE.HEADERS,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -249,7 +249,7 @@ test("subscribe parse qualifier headers 3", () => {
     type: EXCHANGE_TYPE.HEADERS,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -260,7 +260,7 @@ test("subscribe parse qualifier headers 6", () => {
     type: EXCHANGE_TYPE.HEADERS,
     exchange: "exchange",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -269,7 +269,7 @@ test("subscribe parse qualifier q 1", () => {
     type: "q",
     exchange: "",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -278,7 +278,7 @@ test("subscribe parse qualifier q 2", () => {
     type: "q",
     exchange: "",
     queue: "",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -287,7 +287,7 @@ test("subscribe parse qualifier q 3", () => {
     type: "q",
     exchange: "",
     queue: "queue",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -296,7 +296,7 @@ test("subscribe parse qualifier q 4", () => {
     type: "q",
     exchange: "",
     queue: "queue",
-    routingKey: ""
+    routingKey: "",
   });
 });
 
@@ -305,7 +305,7 @@ test("subscribe parse qualifier q 5", () => {
     type: "q",
     exchange: "",
     queue: "queue",
-    routingKey: ""
+    routingKey: "",
   });
 });
 

@@ -6,18 +6,18 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const publishChannel = amqpconnection.buildChannelIfNotExists({
   name: "publishChannel",
   json: "true",
-  realm: "space."
+  realm: "space.",
 });
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
   json: "true",
-  realm: "space."
+  realm: "space.",
 });
 
 beforeAll(async () => {
@@ -25,19 +25,20 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await publishChannel.addSetup(channel => {
+  await publishChannel.addSetup((channel) => {
     return Promise.all([
       channel.deleteExchange("space.my-direct-exchange-dead-1"),
       channel.deleteExchange("space.dl_500"),
       channel.deleteQueue("space.my-direct-queue-dead-1"),
       channel.deleteQueue("space.dl_500"),
-      channel.deleteQueue("space.the_dump_queue")
+      channel.deleteQueue("space.the_dump_queue"),
     ]);
   });
 
-  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
-    () => amqpconnection.close()
-  );
+  return Promise.all([
+    publishChannel.close(),
+    subscribeChannel.close(),
+  ]).then(() => amqpconnection.close());
 });
 
 test("publish json on deadlettered subscribe", async () => {
@@ -58,7 +59,7 @@ test("publish json on deadlettered subscribe", async () => {
         {
           retry: 500,
           maxTries: 4,
-          dumpQueue: "the_dump_queue"
+          dumpQueue: "the_dump_queue",
         }
       )
       .then(() => {

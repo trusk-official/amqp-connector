@@ -7,19 +7,19 @@ const amqpconnector = require("../src/index");
 const amqpconnection = amqpconnector({
   urls: ["amqp://localhost:5672"],
   serviceName: "my_service",
-  serviceVersion: "1.2.3"
+  serviceVersion: "1.2.3",
 }).connect();
 
 const publishChannel = amqpconnection.buildChannelIfNotExists({
   name: "publishChannel",
   json: true,
-  realm: "space."
+  realm: "space.",
 });
 
 const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
   json: true,
-  realm: "space."
+  realm: "space.",
 });
 
 beforeAll(async () => {
@@ -27,18 +27,19 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await publishChannel.addSetup(channel => {
+  await publishChannel.addSetup((channel) => {
     return Promise.all([
       channel.deleteExchange("space.my-direct-exchange-1"),
       channel.deleteExchange("space.my-direct-exchange-2"),
       channel.deleteQueue("space.my-queue-1"),
-      channel.deleteQueue("space.my-queue-2")
+      channel.deleteQueue("space.my-queue-2"),
     ]);
   });
 
-  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
-    () => amqpconnection.close()
-  );
+  return Promise.all([
+    publishChannel.close(),
+    subscribeChannel.close(),
+  ]).then(() => amqpconnection.close());
 });
 
 test("publish subscribe direct json on json channel", async () => {
@@ -57,32 +58,32 @@ test("publish subscribe direct json on json channel", async () => {
           publishChannel.publishMessage(
             "direct/my-direct-exchange-1/my.routing.key",
             {
-              foo: "bar"
+              foo: "bar",
             }
           ),
           publishChannel.publishMessage(
             "direct/my-direct-exchange-1/my.routing.stuff",
             {
-              foo: "biz"
+              foo: "biz",
             }
-          )
+          ),
         ]);
       })
       .catch(reject);
   });
   expect(result.length).toBe(1);
   expect(result[0].content).toStrictEqual({
-    foo: "bar"
+    foo: "bar",
   });
   expect(R.pick(["exchange", "routingKey"], result[0].fields)).toStrictEqual({
     exchange: "space.my-direct-exchange-1",
-    routingKey: "space.my.routing.key"
+    routingKey: "space.my.routing.key",
   });
   expect(
     R.pick(["contentType", "deliveryMode"], result[0].properties)
   ).toStrictEqual({
     contentType: "application/json",
-    deliveryMode: 2
+    deliveryMode: 2,
   });
 });
 
@@ -105,7 +106,7 @@ test("publish subscribe direct Buffer on json channel", async () => {
       })
       .catch(reject);
   });
-  const contentType = result.map(m => m.content.type);
+  const contentType = result.map((m) => m.content.type);
   expect(contentType.length).toBe(1);
   expect(R.uniq(contentType).length).toBe(1);
   expect(contentType[0]).toBe("Buffer");

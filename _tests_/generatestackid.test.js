@@ -10,12 +10,12 @@ test("constants", () => {
     generateStackId(),
     generateStackId(7),
     generateStackId(8),
-    generateStackId(9)
-  ].filter(_ => _);
+    generateStackId(9),
+  ].filter((_) => _);
 
   expect(ids.length).toBe(6);
   expect(R.uniq(ids).length).toBe(6);
-  expect(ids.every(s => typeof s === "string")).toBe(true);
+  expect(ids.every((s) => typeof s === "string")).toBe(true);
   expect(ids[0].length).toBe(5);
   expect(ids[1].length).toBe(5);
   expect(ids[2].length).toBe(5);
