@@ -12,6 +12,7 @@ const {
   invokeQualifier,
   promiseTimeout,
   generateStackId,
+  isFn,
 } = require("./utils");
 
 const { INVOKE_TYPE } = require("./constants");
@@ -276,8 +277,13 @@ const amqpconnector = (conf) => {
                           message.content
                         ),
                       };
-                      if (schema) {
-                        const { error, value } = schema.validate(mess);
+                      if (
+                        schema ||
+                        (params.validator && isFn(params.validator))
+                      ) {
+                        const { error, value } = schema
+                          ? schema.validate(mess)
+                          : params.validator(mess);
                         if (error) {
                           config.transport.warn(
                             "subscribe_message_fails_validation",
@@ -705,8 +711,10 @@ const amqpconnector = (conf) => {
               };
               return Promise.resolve()
                 .then(() => {
-                  if (schema) {
-                    const { error, value } = schema.validate(mess);
+                  if (schema || (params.validator && isFn(params.validator))) {
+                    const { error, value } = schema
+                      ? schema.validate(mess)
+                      : params.validator(mess);
                     if (error) {
                       config.transport.warn(
                         "listen_rpc_message_fails_validation",
