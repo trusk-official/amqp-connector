@@ -91,6 +91,7 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.validator - a validation function. Must return an { error, value } object. Schema takes precedence over validator.
  * @param {object} options.nack - a message nack arguments object
  * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
  * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
@@ -165,6 +166,28 @@ channel.subscribeToMessages(
   }
 );
 
+// or use a validator function
+// The validator function must return an { error, value } object
+// schema takes precedence over validator
+const schema = Joi.object({
+  content: Joi.object(),
+  properties: Joi.object({
+    headers: Joi.object({
+      "x-service-version": Joi.string().regex(/^1.2.\d$/) // validates every 1.2 patches
+    }).unknown()
+  }).unknown()
+}).unknown();
+
+channel.subscribeToMessages(
+  "direct/my-direct-exchange/my.routing.key/my-queue",
+  async ({ message }) => {
+    // handle message
+  },
+  {
+    validator: schema.validator.bind(schema)
+  }
+);
+
 /**
  * Publish to an exchange
  * @param {string} qualifier - the publish string, see Publish qualifier
@@ -198,6 +221,7 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.validator - a validation function. Must return an { error, value } object. Schema takes precedence over validator.
  * @param {object} options.nack - a message nack arguments object
  * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
  * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
@@ -247,6 +271,7 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.validator - a validation function. Must return an { error, value } object. Schema takes precedence over validator.
  * @param {object} options.nack - a message nack arguments object
  * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
  * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
@@ -296,6 +321,7 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.validator - a validation function. Must return an { error, value } object. Schema takes precedence over validator.
  * @param {object} options.nack - a message nack arguments object
  * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
  * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
@@ -359,6 +385,7 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.headers - The subscribe headers, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_bindQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.validator - a validation function. Must return an { error, value } object. Schema takes precedence over validator.
  * @param {object} options.nack - a message nack arguments object
  * @param {bool} options.nack.allUpTo - defaults to false, see allUpTo https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
  * @param {bool} options.nack.requeue - defaults to false, see requeue https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack
@@ -408,6 +435,7 @@ const channel = connection.buildChannelIfNotExists({ json: true });
  * @param {object} options - The subscribe options
  * @param {object} options.queue - The queue parameters, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
  * @param {object} options.schema - a Joi validation schema, see https://github.com/hapijs/joi/blob/v16.0.0-rc2/API.md#object---inherits-from-any
+ * @param {object} options.validator - a validation function. Must return an { error, value } object. Schema takes precedence over validator.
  * @return {Promise<object>} A promise that resolves { consumerTag }, see https://www.squaremobius.net/amqp.node/channel_api.html#channel_consume
  */
 channel.listen("my-rpc-function", async ({ message }) => {

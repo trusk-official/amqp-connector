@@ -128,10 +128,13 @@ const generateStackId = (size = 5) => {
   );
 };
 
+const isFn = (fn) => fn && {}.toString.call(fn) === "[object Function]";
+
 module.exports = {
   subscribeQualifierParser,
   publishQualifierParser,
   invokeQualifier,
   promiseTimeout,
   generateStackId,
+  isFn,
 };
