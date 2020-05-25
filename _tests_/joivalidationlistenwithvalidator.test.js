@@ -35,10 +35,8 @@ afterAll(async () => {
       })
       .then(() => {
         return Promise.all([
-          channel.deleteQueue("my-validated-rpc-function-1"),
-          channel.deleteQueue("my-validated-rpc-function-2"),
-          channel.deleteQueue("my-validated-rpc-function-3"),
-          channel.deleteQueue("my-validated-rpc-function-4"),
+          channel.deleteQueue("my-validated-rpc-function-5"),
+          channel.deleteQueue("my-validated-rpc-function-6"),
         ]);
       });
   });
@@ -58,7 +56,7 @@ test("message format validation on listen 1", async () => {
     }).unknown(),
   }).unknown();
   const { consumerTag: ct1 } = await subscribeChannel.listen(
-    "my-validated-rpc-function-1",
+    "my-validated-rpc-function-5",
     async ({ message }) => {
       return message.content;
     },
@@ -67,7 +65,7 @@ test("message format validation on listen 1", async () => {
     }
   );
   cTags.push(ct1);
-  const result = await publishChannel.invoke("my-validated-rpc-function-1", {
+  const result = await publishChannel.invoke("my-validated-rpc-function-5", {
     value: 42,
   });
   expect(result.content.value).toBe(42);
@@ -83,7 +81,7 @@ test("message format validation on listen 2", async () => {
     }).unknown(),
   }).unknown();
   const { consumerTag: ct2 } = await subscribeChannel.listen(
-    "my-validated-rpc-function-2",
+    "my-validated-rpc-function-6",
     async ({ message }) => {
       return message.content;
     },
@@ -93,7 +91,7 @@ test("message format validation on listen 2", async () => {
   );
   cTags.push(ct2);
   const result = await publishChannel
-    .invoke("my-validated-rpc-function-2", {
+    .invoke("my-validated-rpc-function-6", {
       value: 42,
     })
     .catch((e) => e);

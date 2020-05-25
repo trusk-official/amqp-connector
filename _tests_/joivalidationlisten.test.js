@@ -37,8 +37,6 @@ afterAll(async () => {
         return Promise.all([
           channel.deleteQueue("my-validated-rpc-function-1"),
           channel.deleteQueue("my-validated-rpc-function-2"),
-          channel.deleteQueue("my-validated-rpc-function-3"),
-          channel.deleteQueue("my-validated-rpc-function-4"),
         ]);
       });
   });

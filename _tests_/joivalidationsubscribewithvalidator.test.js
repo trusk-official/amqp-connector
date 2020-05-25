@@ -28,14 +28,14 @@ beforeAll(async () => {
 afterAll(async () => {
   await publishChannel.addSetup((channel) => {
     return Promise.all([
-      channel.deleteExchange("my-direct-validated-exchange-1"),
-      channel.deleteExchange("my-direct-validated-exchange-2"),
-      channel.deleteExchange("my-direct-validated-exchange-3"),
-      channel.deleteExchange("my-direct-validated-exchange-4"),
-      channel.deleteQueue("my-validated-queue-1"),
-      channel.deleteQueue("my-validated-queue-2"),
-      channel.deleteQueue("my-validated-queue-3"),
-      channel.deleteQueue("my-validated-queue-4"),
+      channel.deleteExchange("my-direct-validated-exchange-5"),
+      channel.deleteExchange("my-direct-validated-exchange-6"),
+      channel.deleteExchange("my-direct-validated-exchange-7"),
+      channel.deleteExchange("my-direct-validated-exchange-8"),
+      channel.deleteQueue("my-validated-queue-5"),
+      channel.deleteQueue("my-validated-queue-6"),
+      channel.deleteQueue("my-validated-queue-7"),
+      channel.deleteQueue("my-validated-queue-8"),
     ]);
   });
 
@@ -68,7 +68,7 @@ test("message format validation on subscribe (1)", async () => {
 
     Promise.all([
       subscribeChannel.subscribeToMessages(
-        "direct/my-direct-validated-exchange-1/my.routing.key/my-validated-queue-1",
+        "direct/my-direct-validated-exchange-5/my.routing.key/my-validated-queue-5",
         async ({ message }) => {
           messagesReceived_1.push(message);
         },
@@ -77,7 +77,7 @@ test("message format validation on subscribe (1)", async () => {
         }
       ),
       subscribeChannel.subscribeToMessages(
-        "direct/my-direct-validated-exchange-2/my.routing.key/my-validated-queue-2",
+        "direct/my-direct-validated-exchange-6/my.routing.key/my-validated-queue-6",
         async ({ message }) => {
           messagesReceived_2.push(message);
         },
@@ -89,13 +89,13 @@ test("message format validation on subscribe (1)", async () => {
       .then(() => {
         return Promise.all([
           publishChannel.publishMessage(
-            "direct/my-direct-validated-exchange-1/my.routing.key",
+            "direct/my-direct-validated-exchange-5/my.routing.key",
             {
               foo: "bar",
             }
           ),
           publishChannel.publishMessage(
-            "direct/my-direct-validated-exchange-2/my.routing.key",
+            "direct/my-direct-validated-exchange-6/my.routing.key",
             {
               foo: "biz",
             }
