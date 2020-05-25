@@ -279,7 +279,7 @@ const amqpconnector = (conf) => {
                       if (schema) {
                         const { error, value } = schema.validate(mess);
                         if (error) {
-                          config.transport.debug(
+                          config.transport.warn(
                             "subscribe_message_fails_validation",
                             qualifier,
                             mess,
@@ -708,7 +708,7 @@ const amqpconnector = (conf) => {
                   if (schema) {
                     const { error, value } = schema.validate(mess);
                     if (error) {
-                      config.transport.debug(
+                      config.transport.warn(
                         "listen_rpc_message_fails_validation",
                         fnName,
                         mess,
