@@ -7,10 +7,12 @@
     "lint": "eslint .",
     "test": "jest"
   },
+  "peerDependencies": {
+    "amqplib": "*"
+  },
   "dependencies": {
     "@hapi/joi": "^16.1.7",
     "@trusk/amqp-connection-manager": "3.2.4",
-    "amqplib": "^0.5.5",
     "json-stringify-safe": "^5.0.1",
     "ramda": "^0.27.0",
     "uuid": "^8.0.0"
