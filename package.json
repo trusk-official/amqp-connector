@@ -1,6 +1,6 @@
 {
   "name": "@trusk/amqp-connector",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "main": "src/index.js",
   "license": "MIT",
   "scripts": {
