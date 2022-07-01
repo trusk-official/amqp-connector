@@ -20,24 +20,21 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("my-topic-exchange-1"),
       channel.deleteExchange("my-topic-exchange-2"),
       channel.deleteQueue("my-topic-queue-1"),
       channel.deleteQueue("my-topic-queue-2"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("publish subscribe topic json on json channel", async () => {
@@ -53,8 +50,8 @@ test("publish subscribe topic json on json channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "topic/my-topic-exchange-1/my.routing.key",
             {
@@ -82,8 +79,8 @@ test("publish subscribe topic json on json channel", async () => {
               value: "your.stuff",
             }
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   const values = result.map((m) => m.content.value);
@@ -106,8 +103,8 @@ test("publish subscribe topic buffer on json channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "topic/my-topic-exchange-2/my.routing.key",
             Buffer.from(
@@ -148,8 +145,8 @@ test("publish subscribe topic buffer on json channel", async () => {
               })
             )
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   const contentType = result.map((m) => m.content.type);

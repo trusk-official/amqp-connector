@@ -18,24 +18,21 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("my-direct-exchange-3"),
       channel.deleteExchange("my-direct-exchange-4"),
       channel.deleteQueue("my-queue-3"),
       channel.deleteQueue("my-queue-4"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("publish subscribe direct buffer on raw channel", async () => {
@@ -49,8 +46,8 @@ test("publish subscribe direct buffer on raw channel", async () => {
           resolve(messagesReceived);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "direct/my-direct-exchange-3/my.routing.key",
             Buffer.from(
@@ -67,8 +64,8 @@ test("publish subscribe direct buffer on raw channel", async () => {
               })
             )
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   expect(result.length).toBe(1);
@@ -104,12 +101,12 @@ test("publish subscribe direct json on raw channel", async () => {
           resolve(messagesReceived);
         }
       )
-      .then(() => {
-        return publishChannel.publishMessage(
+      .then(() =>
+        publishChannel.publishMessage(
           "direct/my-direct-exchange-4/my.routing.key",
           { foo: "bar" }
-        );
-      })
+        )
+      )
       .catch((e) => {
         messagesReceived.push(e);
         resolve(messagesReceived);

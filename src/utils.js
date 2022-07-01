@@ -100,17 +100,18 @@ const invokeQualifier = (qualifier, params = { realm: null }) => {
  */
 const promiseTimeout = (ms, promisef) => {
   let id = null;
-  const timeout = new Promise((resolve, reject) => {
-    id = setTimeout(() => {
-      clearTimeout(id);
-      reject(new Error(`timeout_${ms}ms`));
-    }, ms);
-  });
+  const timeoutf = () =>
+    new Promise((resolve, reject) => {
+      id = setTimeout(() => {
+        clearTimeout(id);
+        reject(new Error(`timeout_${ms}ms`));
+      }, ms);
+    });
   return Promise.race([
     promisef().finally(() => {
       clearTimeout(id);
     }),
-    timeout,
+    timeoutf(),
   ]);
 };
 

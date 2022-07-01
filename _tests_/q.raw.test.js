@@ -16,24 +16,21 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("any-exchange-3"),
       channel.deleteExchange("any-exchange-4"),
       channel.deleteQueue("my-q-queue-3"),
       channel.deleteQueue("my-q-queue-4"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("publish subscribe q Buffer on raw channel", async () => {
@@ -49,8 +46,8 @@ test("publish subscribe q Buffer on raw channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "q/my-q-queue-3",
             Buffer.from(
@@ -91,8 +88,8 @@ test("publish subscribe q Buffer on raw channel", async () => {
               })
             )
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   const values = result.map((m) => JSON.parse(Buffer.from(m.content)).value);
@@ -123,8 +120,8 @@ test("publish subscribe q raw on raw channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage("q/my-q-queue-4", {
             value: "my.routing.key",
           }),
@@ -140,8 +137,8 @@ test("publish subscribe q raw on raw channel", async () => {
           publishChannel.publishMessage("q/my-q-queue-4", {
             value: "your.stuff",
           }),
-        ]);
-      })
+        ])
+      )
       .catch((e) => {
         messagesReceived.push(e);
       });

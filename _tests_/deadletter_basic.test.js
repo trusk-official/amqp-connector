@@ -20,25 +20,22 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   realm: "space.",
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("space.my-direct-exchange-dead-1"),
       channel.deleteExchange("space.dl_500"),
       channel.deleteQueue("space.my-direct-queue-dead-1"),
       channel.deleteQueue("space.dl_500"),
       channel.deleteQueue("space.the_dump_queue"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("publish json on deadlettered subscribe", async () => {
@@ -62,12 +59,11 @@ test("publish json on deadlettered subscribe", async () => {
           dumpQueue: "the_dump_queue",
         }
       )
-      .then(() => {
-        return publishChannel.publishMessage(
-          "direct/my-direct-exchange-dead-1/dead",
-          { value: "bar" }
-        );
-      })
+      .then(() =>
+        publishChannel.publishMessage("direct/my-direct-exchange-dead-1/dead", {
+          value: "bar",
+        })
+      )
       .catch(reject);
   });
   expect(result.length).toBe(4);

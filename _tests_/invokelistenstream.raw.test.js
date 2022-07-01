@@ -21,22 +21,17 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await subscribeChannel.addSetup((channel) => {
-    return Promise.resolve()
-      .then(() => {
-        return Promise.all(cTags.map((t) => channel.cancel(t)));
-      })
-      .then(() => channel.deleteQueue("my-rpc-function-stream-1"));
-  });
-  return Promise.all([
-    publishChannel.close(),
-    publishChannel.close(),
-  ]).then(() => Promise.all([amqpconnection.close()]));
+  await subscribeChannel.addSetup((channel) =>
+    Promise.resolve()
+      .then(() => Promise.all(cTags.map((t) => channel.cancel(t))))
+      .then(() => channel.deleteQueue("my-rpc-function-stream-1"))
+  );
+  return Promise.all([publishChannel.close(), publishChannel.close()]).then(
+    () => Promise.all([amqpconnection.close()])
+  );
 });
 
 test.skip("invoke subscribe stream function", async () => {
@@ -44,9 +39,9 @@ test.skip("invoke subscribe stream function", async () => {
   const streamed_path_file = path.resolve(`${__dirname}/data/text_file_2.txt`);
   await new Promise((resolve) => {
     subscribeChannel
-      .listen("my-rpc-function-stream-1", async () => {
-        return fs.createReadStream(to_stream_path_file);
-      })
+      .listen("my-rpc-function-stream-1", async () =>
+        fs.createReadStream(to_stream_path_file)
+      )
       .then(({ consumerTag }) => {
         cTags.push(consumerTag);
         const stream = publishChannel.invoke(

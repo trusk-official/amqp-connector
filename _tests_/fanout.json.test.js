@@ -20,24 +20,21 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("my-fanout-exchange-1"),
       channel.deleteExchange("my-fanout-exchange-2"),
       channel.deleteQueue("my-fanout-queue-1"),
       channel.deleteQueue("my-fanout-queue-2"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("publish subscribe fanout json on json channel", async () => {
@@ -53,8 +50,8 @@ test("publish subscribe fanout json on json channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage("fanout/my-fanout-exchange-1", {
             value: "my.routing.key",
           }),
@@ -70,8 +67,8 @@ test("publish subscribe fanout json on json channel", async () => {
           publishChannel.publishMessage("fanout/my-fanout-exchange-1", {
             value: "your.stuff",
           }),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   const values = result.map((m) => m.content.value);
@@ -96,8 +93,8 @@ test("publish subscribe fanout buffer on json channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "fanout/my-fanout-exchange-2",
             Buffer.from(
@@ -138,8 +135,8 @@ test("publish subscribe fanout buffer on json channel", async () => {
               })
             )
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   const contentType = result.map((m) => m.content.type);

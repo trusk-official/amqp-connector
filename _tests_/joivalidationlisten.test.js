@@ -23,35 +23,28 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await subscribeChannel.addSetup((channel) => {
-    return Promise.resolve()
-      .then(() => {
-        return Promise.all(cTags.map((t) => channel.cancel(t)));
-      })
-      .then(() => {
-        return Promise.all([
+  await subscribeChannel.addSetup((channel) =>
+    Promise.resolve()
+      .then(() => Promise.all(cTags.map((t) => channel.cancel(t))))
+      .then(() =>
+        Promise.all([
           channel.deleteQueue("my-validated-rpc-function-1"),
           channel.deleteQueue("my-validated-rpc-function-2"),
-        ]);
-      });
-  });
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+        ])
+      )
+  );
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("message format validation on listen 1", async () => {
   const { consumerTag: ct1 } = await subscribeChannel.listen(
     "my-validated-rpc-function-1",
-    async ({ message }) => {
-      return message.content;
-    },
+    async ({ message }) => message.content,
     {
       schema: Joi.object({
         content: Joi.object(),
@@ -73,9 +66,7 @@ test("message format validation on listen 1", async () => {
 test("message format validation on listen 2", async () => {
   const { consumerTag: ct2 } = await subscribeChannel.listen(
     "my-validated-rpc-function-2",
-    async ({ message }) => {
-      return message.content;
-    },
+    async ({ message }) => message.content,
     {
       schema: Joi.object({
         content: Joi.object(),

@@ -14,9 +14,7 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
   const amqpconnectioncleanup = amqpconnector({
@@ -33,20 +31,17 @@ afterAll(async () => {
       });
       channelcleanup.waitForConnect().then(resolve);
     });
-  }).then(() => {
-    return channelcleanup.addSetup((channel) => {
-      return Promise.all([
+  }).then(() =>
+    channelcleanup.addSetup((channel) =>
+      Promise.all([
         channel.deleteExchange("my-conflicting-exchange-2"),
         channel.deleteQueue("my-conflicting-queue-2"),
-      ]);
-    });
-  });
+      ])
+    )
+  );
 
-  return Promise.all([
-    subscribeChannel.close(),
-    channelcleanup.close(),
-  ]).then(() =>
-    Promise.all([amqpconnection.close(), amqpconnectioncleanup.close()])
+  return Promise.all([subscribeChannel.close(), channelcleanup.close()]).then(
+    () => Promise.all([amqpconnection.close(), amqpconnectioncleanup.close()])
   );
 });
 
@@ -62,8 +57,8 @@ test("subscribe conflicting exchange config", async () => {
         },
       }
     )
-    .then(() => {
-      return subscribeChannel
+    .then(() =>
+      subscribeChannel
         .subscribeToMessages(
           "direct/my-conflicting-exchange-2/my.routing.key/my-conflicting-queue-2",
           async () => {},
@@ -75,7 +70,7 @@ test("subscribe conflicting exchange config", async () => {
         )
         .catch(() => {
           failsToSubscribeWithConflictingQueueConfig = true;
-        });
-    });
+        })
+    );
   expect(failsToSubscribeWithConflictingQueueConfig).toBe(true);
 });

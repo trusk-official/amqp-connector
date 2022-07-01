@@ -17,24 +17,21 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("my-topic-exchange-3"),
       channel.deleteExchange("my-topic-exchange-4"),
       channel.deleteQueue("my-topic-queue-3"),
       channel.deleteQueue("my-topic-queue-4"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("publish subscribe topic Buffer on raw channel", async () => {
@@ -50,8 +47,8 @@ test("publish subscribe topic Buffer on raw channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "topic/my-topic-exchange-3/my.routing.key",
             Buffer.from(
@@ -92,8 +89,8 @@ test("publish subscribe topic Buffer on raw channel", async () => {
               })
             )
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   const values = result.map((m) => JSON.parse(Buffer.from(m.content)).value);
@@ -116,8 +113,8 @@ test("publish subscribe topic json on raw channel", async () => {
           messagesReceived.push(message);
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "topic/my-topic-exchange-4/my.routing.key",
             {
@@ -145,8 +142,8 @@ test("publish subscribe topic json on raw channel", async () => {
               value: "your.stuff",
             }
           ),
-        ]);
-      })
+        ])
+      )
       .catch((e) => {
         messagesReceived.push(e);
       });

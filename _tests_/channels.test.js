@@ -8,13 +8,14 @@ const amqpconnection = amqpconnector({
   serviceVersion: "1.2.3",
 }).connect();
 
-beforeAll(async () => {
-  return new Promise((resolve) => {
-    amqpconnection.on("connect", async () => {
-      resolve();
-    });
-  });
-});
+beforeAll(
+  async () =>
+    new Promise((resolve) => {
+      amqpconnection.on("connect", async () => {
+        resolve();
+      });
+    })
+);
 
 let channeldefault = null;
 let channel1 = null;

@@ -14,9 +14,7 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
   const amqpconnectioncleanup = amqpconnector({
@@ -33,20 +31,17 @@ afterAll(async () => {
       });
       channelcleanup.waitForConnect().then(resolve);
     });
-  }).then(() => {
-    return channelcleanup.addSetup((channel) => {
-      return Promise.all([
+  }).then(() =>
+    channelcleanup.addSetup((channel) =>
+      Promise.all([
         channel.deleteQueue("my-conflicting-rpc-function-1"),
         channel.deleteQueue("my-conflicting-rpc-function-2"),
-      ]);
-    });
-  });
+      ])
+    )
+  );
 
-  return Promise.all([
-    subscribeChannel.close(),
-    channelcleanup.close(),
-  ]).then(() =>
-    Promise.all([amqpconnection.close(), amqpconnectioncleanup.close()])
+  return Promise.all([subscribeChannel.close(), channelcleanup.close()]).then(
+    () => Promise.all([amqpconnection.close(), amqpconnectioncleanup.close()])
   );
 });
 
@@ -55,22 +50,18 @@ test("listen conflicting exchange config", async () => {
   await subscribeChannel
     .listen(
       "my-conflicting-rpc-function-1",
-      async ({ message }) => {
-        return { value: 10 * message.content.value };
-      },
+      async ({ message }) => ({ value: 10 * message.content.value }),
       {
         queue: {
           exclusive: true,
         },
       }
     )
-    .then(() => {
-      return subscribeChannel
+    .then(() =>
+      subscribeChannel
         .listen(
           "my-conflicting-rpc-function-1",
-          async ({ message }) => {
-            return { value: 5 * message.content.value };
-          },
+          async ({ message }) => ({ value: 5 * message.content.value }),
           {
             queue: {
               exclusive: false,
@@ -79,7 +70,7 @@ test("listen conflicting exchange config", async () => {
         )
         .catch(() => {
           failsToListenWithConflictingQueueConfig = true;
-        });
-    });
+        })
+    );
   expect(failsToListenWithConflictingQueueConfig).toBe(true);
 });
