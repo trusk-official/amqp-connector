@@ -35,26 +35,26 @@ const subscribeChannel2 = amqpconnection2.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return Promise.all([
+beforeAll(async () =>
+  Promise.all([
     subscribeChannel1.waitForConnect(),
     subscribeChannel2.waitForConnect(),
-  ]);
-});
+  ])
+);
 
 afterAll(async () => {
   await Promise.all([
-    publishChannel1.addSetup((channel) => {
-      return Promise.all([
+    publishChannel1.addSetup((channel) =>
+      Promise.all([
         channel.deleteExchange("my-direct-traced-exchange-1"),
         channel.deleteExchange("my-direct-traced-exchange-2"),
         channel.deleteQueue("my-traced-queue-1"),
         channel.deleteQueue("my-traced-queue-2"),
-      ]);
-    }),
-    subscribeChannel2.addSetup((channel) => {
-      return Promise.all([channel.deleteQueue("my-traced-rpc-function-5")]);
-    }),
+      ])
+    ),
+    subscribeChannel2.addSetup((channel) =>
+      Promise.all([channel.deleteQueue("my-traced-rpc-function-5")])
+    ),
   ]);
 
   return Promise.all([
@@ -103,14 +103,14 @@ test("publish subscribe RPC function traced", async () => {
         }
       ),
     ])
-      .then(() => {
-        return publishChannel1.publishMessage(
+      .then(() =>
+        publishChannel1.publishMessage(
           "direct/my-direct-traced-exchange-1/my.routing.key",
           {
             value: 42,
           }
-        );
-      })
+        )
+      )
       .catch(reject);
   });
 

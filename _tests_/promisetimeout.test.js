@@ -11,11 +11,11 @@ test("promise timeout resolve on time", async () => {
       })
   ).then(
     (s) =>
-      new Promise((resolve) =>
+      new Promise((resolve) => {
         setTimeout(() => {
           resolve(s);
-        }, 2000)
-      )
+        }, 2000);
+      })
   );
   const r = await p;
   expect(r).toBe("done_on_time");

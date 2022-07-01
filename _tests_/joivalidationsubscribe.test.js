@@ -1,7 +1,7 @@
 jest.setTimeout(30000);
 
 const Promise = require("bluebird");
-const Joi = require("@hapi/joi");
+const Joi = require("joi");
 
 const amqpconnector = require("../src/index");
 
@@ -21,26 +21,23 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("my-direct-validated-exchange-1"),
       channel.deleteExchange("my-direct-validated-exchange-2"),
       channel.deleteExchange("my-direct-validated-exchange-3"),
       channel.deleteQueue("my-validated-queue-1"),
       channel.deleteQueue("my-validated-queue-2"),
       channel.deleteQueue("my-validated-queue-3"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("message format validation on subscribe (1)", async () => {
@@ -92,8 +89,8 @@ test("message format validation on subscribe (1)", async () => {
         }
       ),
     ])
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "direct/my-direct-validated-exchange-1/my.routing.key",
             {
@@ -112,8 +109,8 @@ test("message format validation on subscribe (1)", async () => {
               foo: "biz",
             }
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
     setTimeout(() => {
       resolve([messagesReceived_1, messagesReceived_2, messagesReceived_3]);

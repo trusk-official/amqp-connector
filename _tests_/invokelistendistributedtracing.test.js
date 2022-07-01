@@ -37,38 +37,34 @@ const subscribeChannel2 = amqpconnection2.buildChannelIfNotExists({
   json: true,
 });
 
-beforeAll(async () => {
-  return Promise.all([
+beforeAll(async () =>
+  Promise.all([
     subscribeChannel1.waitForConnect(),
     subscribeChannel2.waitForConnect(),
-  ]);
-});
+  ])
+);
 
 afterAll(async () => {
-  await subscribeChannel2.addSetup((channel) => {
-    return Promise.resolve()
-      .then(() => {
-        return Promise.all(cTags.map((t) => channel.cancel(t)));
-      })
-      .then(() => {
-        return Promise.all([
+  await subscribeChannel2.addSetup((channel) =>
+    Promise.resolve()
+      .then(() => Promise.all(cTags.map((t) => channel.cancel(t))))
+      .then(() =>
+        Promise.all([
           channel.deleteQueue("my-traced-rpc-function-2"),
           channel.deleteQueue("my-traced-rpc-function-3"),
-        ]);
-      });
-  });
-  await subscribeChannel1.addSetup((channel) => {
-    return Promise.resolve()
-      .then(() => {
-        return Promise.all(cTags.map((t) => channel.cancel(t)));
-      })
-      .then(() => {
-        return Promise.all([
+        ])
+      )
+  );
+  await subscribeChannel1.addSetup((channel) =>
+    Promise.resolve()
+      .then(() => Promise.all(cTags.map((t) => channel.cancel(t))))
+      .then(() =>
+        Promise.all([
           channel.deleteQueue("my-traced-rpc-function-1"),
           channel.deleteQueue("my-traced-rpc-function-4"),
-        ]);
-      });
-  });
+        ])
+      )
+  );
   return Promise.all([
     publishChannel1.close(),
     subscribeChannel1.close(),
@@ -127,9 +123,7 @@ test("invoke listen RPC function traced", async () => {
 
   const result = await publishChannel1
     .invoke("my-traced-rpc-function-1", { value: 42 })
-    .then((response) => {
-      return response.content.value;
-    });
+    .then((response) => response.content.value);
 
   expect(result).toBe(42 * 2 * 3 * 4 * 5);
   expect(headerStack.length).toBe(4);

@@ -17,24 +17,21 @@ const subscribeChannel = amqpconnection.buildChannelIfNotExists({
   name: "subscribeChannel",
 });
 
-beforeAll(async () => {
-  return subscribeChannel.waitForConnect();
-});
+beforeAll(async () => subscribeChannel.waitForConnect());
 
 afterAll(async () => {
-  await publishChannel.addSetup((channel) => {
-    return Promise.all([
+  await publishChannel.addSetup((channel) =>
+    Promise.all([
       channel.deleteExchange("my-headers-exchange-3"),
       channel.deleteExchange("my-headers-exchange-4"),
       channel.deleteQueue("my-headers-queue-3"),
       channel.deleteQueue("my-headers-queue-4"),
-    ]);
-  });
+    ])
+  );
 
-  return Promise.all([
-    publishChannel.close(),
-    subscribeChannel.close(),
-  ]).then(() => amqpconnection.close());
+  return Promise.all([publishChannel.close(), subscribeChannel.close()]).then(
+    () => amqpconnection.close()
+  );
 });
 
 test("publish subscribe Buffer json on raw channel", async () => {
@@ -57,8 +54,8 @@ test("publish subscribe Buffer json on raw channel", async () => {
           },
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "headers/my-headers-exchange-3",
             Buffer.from(
@@ -103,8 +100,8 @@ test("publish subscribe Buffer json on raw channel", async () => {
               })
             )
           ),
-        ]);
-      })
+        ])
+      )
       .catch(reject);
   });
   const values = result.map((m) => JSON.parse(Buffer.from(m.content)).value);
@@ -134,8 +131,8 @@ test("publish subscribe headers json on raw channel", async () => {
           },
         }
       )
-      .then(() => {
-        return Promise.all([
+      .then(() =>
+        Promise.all([
           publishChannel.publishMessage(
             "headers/my-headers-exchange-4",
             {
@@ -167,8 +164,8 @@ test("publish subscribe headers json on raw channel", async () => {
           publishChannel.publishMessage("headers/my-headers-exchange-4", {
             value: "your.stuff",
           }),
-        ]);
-      })
+        ])
+      )
       .catch((e) => {
         messagesReceived.push(e);
       });
