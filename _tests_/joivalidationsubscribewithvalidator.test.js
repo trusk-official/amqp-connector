@@ -1,7 +1,7 @@
 jest.setTimeout(30000);
 
 const Promise = require("bluebird");
-const Joi = require("@hapi/joi");
+const Joi = require("joi");
 
 const amqpconnector = require("../src/index");
 

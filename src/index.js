@@ -2,7 +2,7 @@ const url = require("url");
 const { v4: uuidv4 } = require("uuid");
 const stringify = require("json-stringify-safe");
 const R = require("ramda");
-const Joi = require("@hapi/joi");
+const Joi = require("joi");
 const amqp = require("@trusk/amqp-connection-manager");
 const Stream = require("stream");
 
