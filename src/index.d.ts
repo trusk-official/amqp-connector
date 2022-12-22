@@ -1,7 +1,9 @@
+export as namespace AmqpConnector;
+
 export = AmqpConnector;
+declare function AmqpConnector(config: AmqpConnector.AmqpConfig): AmqpConnector.AmqpInstance;
 
 declare namespace AmqpConnector {
-
   type ConnectionConfig = {
     url: string;
     connectionOptions: {
@@ -79,9 +81,4 @@ declare namespace AmqpConnector {
     count: number;
     reason: 'rejected' | 'expired' | 'maxlen';
   };
-
-  function AmqpConnector(config: AmqpConfig): AmqpInstance;
 }
-
-
-
