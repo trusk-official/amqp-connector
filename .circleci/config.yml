@@ -30,28 +30,21 @@ jobs:
       - persist_to_workspace:
           root: ~/repo
           paths: .
-  build:
+
+  release:
     <<: *defaults
     steps:
       - attach_workspace:
           at: ~/repo
-      - run:
-          name: Build project
-          command: echo "nothing to do"
-      - persist_to_workspace:
-          root: ~/repo
-          paths: .
-  deploy:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: ~/repo
+      - add_ssh_keys:
+          fingerprints:
+            - "7f:71:b7:34:41:5a:d0:ab:28:ca:4d:62:a8:7c:41:a2"
       - run:
           name: Authenticate with registry
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
       - run:
-          name: Publish package
-          command: npm publish
+          name: release
+          command: npm run multi-semantic-release -- --deps.bump=satisfy --deps.release=patch
 
 workflows:
   version: 2
@@ -61,19 +54,13 @@ workflows:
           filters:
             tags:
               only: /^[0-9]+\.[0-9]+\.[0-9]+/
-      - build:
+      - release:
           requires:
             - test
           filters:
             tags:
               only: /^[0-9]+\.[0-9]+\.[0-9]+/
             branches:
-              ignore: /.*/
-      - deploy:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /^[0-9]+\.[0-9]+\.[0-9]+/
-            branches:
-              ignore: /.*/
+              only:
+                - master
+                - develop
