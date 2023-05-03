@@ -3,9 +3,13 @@
   "version": "1.6.3",
   "main": "src/index.js",
   "license": "MIT",
+  "workspaces": [
+    "."
+    ],
   "scripts": {
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest",
+    "multi-semantic-release": "multi-semantic-release"
   },
   "peerDependencies": {
     "amqplib": "*"
@@ -18,6 +22,8 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "bluebird": "^3.7.2",
     "eslint": "^8.18.0",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -25,6 +31,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-prettier": "^4.2.1",
     "jest": "28.1.2",
+    "multi-semantic-release": "^3.0.2",
     "prettier": "^2.7.1"
   },
   "types": "src/index"
