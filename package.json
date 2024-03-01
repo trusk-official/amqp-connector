@@ -24,6 +24,7 @@
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
+    "@trusk-official/config-release": "^1.7.1",
     "bluebird": "^3.7.2",
     "eslint": "^8.18.0",
     "eslint-config-airbnb-base": "^15.0.0",

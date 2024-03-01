@@ -1,0 +1,13 @@
+name: Release Workflow
+run-name: Release Workflow
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  cd:
+    name: Release Workflow
+    uses: trusk-official/trusk-lib/.github/workflows/release.yaml@master
+    secrets: inherit
