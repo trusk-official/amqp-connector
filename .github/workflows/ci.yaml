@@ -1,0 +1,23 @@
+name: CI Workflow
+run-name: CI Workflow
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+
+jobs:
+  ci:
+    name: ${{ github.event.pull_request.title }}
+    uses: trusk-official/trusk-lib/.github/workflows/trusk.yaml@master
+    secrets: inherit
+    with:
+      image: ${{ github.event.repository.name }}
